@@ -1,0 +1,36 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+{% block title %}ارسال پیامک  برای کارمندان{% endblock %}
+{% block header %}
+<header id="header">
+<div id="branding">
+    <div id="site-name">
+        <a href="{% url 'admin:index' %}">ارسال پیامک سفارشی</a>
+    </div>
+</div>
+</header>
+{% endblock %}
+{% block content %}
+<div id="content-main">
+    <form method="post">
+        {% csrf_token %}
+        {% comment %} <h1>ارسال پیامک برای کارمندان</h1> {% endcomment %}
+        <p>لطفا متن پیامک ارسال را وارد کنید لازم به ذکر است درج عبارت لغو11 انتهای پیام الزامی است</p>
+        
+        <fieldset class="module aligned">
+            <div class="form-row">
+                {{ form.message.errors }}
+                <label for="{{ form.message.id_for_label }}">{{ form.message.label }}:</label>
+                {{ form.message }}
+                {% if form.message.help_text %}
+                    <div class="help">{{ form.message.help_text|safe }}</div>
+                {% endif %}
+            </div>
+        </fieldset>
+
+        <div class="submit-row">
+            <input type="submit" value="ارسال پیامک" class="default">
+        </div>
+    </form>
+</div>
+{% endblock %}

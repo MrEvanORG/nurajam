@@ -1,0 +1,63 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+{% block title %}گزارش ارسال پیام ها{% endblock %}
+{% block header %}
+<header id="header">
+<div id="branding">
+    <div id="site-name">
+        <a href="{% url 'admin:index' %}">گزارش ارسال پیامک</a>
+    </div>
+</div>
+</header>
+{% endblock %}
+{% block content %}
+<div id="content-main">
+    {% comment %} <h1>{{ title }}</h1> {% endcomment %}
+    
+    <div style="padding: 5px 6px; margin-bottom: 20px; border: 1px solid #ccc;border-radios:4px;">
+        <p><strong>خلاصه گزارش:</strong></p>
+        <ul>
+            <li>کل درخواست‌ها: <strong>{{ total_count }}</strong></li>
+            <li style="color: green;">ارسال موفق: <strong>{{ success_count }}</strong></li>
+            <li style="color: red;">ارسال ناموفق: <strong>{{ fail_count }}</strong></li>
+        </ul>
+    </div>
+
+    <div class="results">
+        <table id="result_list">
+            <thead>
+                <tr>
+                    <th>نام کاربر</th>
+                    <th>شماره تلفن</th>
+                    <th>متن پیامک</th>
+                    <th>وضعیت</th>
+                    <th>توضیحات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for result in results %}
+                <tr class="{% cycle 'row1' 'row2' %}">
+                    <td>{{ result.full_name }}</td>
+                    <td>
+                        <a href="{% url 'admin:myapp_user_change' result.user_id %}" target="_blank">
+                            {{ result.phone_number }}
+                        </a>
+                    </td>
+                    <td>{{result.sms_text}}</td>
+                    {% if result.status == 'موفق' %}
+                        <td style="font-weight: bold; color: green;">{{ result.status }}</td>
+                    {% else %}
+                        <td style="font-weight: bold; color: red;">{{ result.status }}</td>
+                    {% endif %}
+                    <td>{{ result.reason }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="submit-row" style="margin-top:10px;">
+        <a href="{% url 'admin:myapp_user_changelist' %}" class="button">بازگشت به لیست کاربران</a>
+    </div>
+</div>
+{% endblock %}
