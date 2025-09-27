@@ -40,11 +40,13 @@ class ActiveLocations(models.Model):
     
 class ActiveModems(models.Model):
     class PaymentChoices(models.TextChoices):
+        mi3 = "mi3" , "اقساط 3 ماهه"
         mi6 = "mi6" , "اقساط 6 ماهه"
         mi12 = "mi12" , "اقساط 12 ماهه"
+        nocash = "nocashneed","عدم نیاز به پرداخت وجه"
         cash  = "cash" , "پرداخت نقدی"
 
-    name = models.CharField(max_length=50,verbose_name='نام مودم')
+    name = models.CharField(max_length=200,verbose_name='نام مودم')
     price = models.BigIntegerField(verbose_name='قیمت مودم (تومان)')
     payment_method = models.CharField(choices=PaymentChoices,max_length=20,verbose_name='شیوه پرداخت')
 
@@ -125,6 +127,7 @@ class ServiceRequests(models.Model):
     fusion_status = models.CharField(max_length=30,choices=ExecutionStatus,default=ExecutionStatus.pending,verbose_name='وضعیت فیوژن')
     pay_status = models.CharField(max_length=30,choices=PayStatus,default=PayStatus.pending,verbose_name='وضعیت پرداخت')
     submission_status = models.CharField(max_length=30,choices=SubmissionStatus,default=SubmissionStatus.pending,verbose_name='وضعیت ثبت فرم')
+    marketer = models.CharField(max_length=50,null=True,blank=True,verbose_name='نام بازاریاب')
 
     #Other information
     request_status = models.CharField(max_length=230,choices=RequestStatus,default=RequestStatus.pending_review,verbose_name='وضعیت درخواست')
@@ -134,6 +137,9 @@ class ServiceRequests(models.Model):
     #detail request
     request_time = models.DateTimeField(auto_now_add=True,null=True,blank=True,verbose_name='تاریخ درخواست')
     ip_address = models.GenericIPAddressField(null=True,blank=True,verbose_name='آیپی درخواست دهنده')
+
+    def get_full_name(self):
+        return f"{self.first_name} {self.last_name}"
 
 
     def __str__(self):

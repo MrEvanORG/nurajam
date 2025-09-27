@@ -40,7 +40,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
     list_display = ('first_name','last_name','location','mobile_number')
     list_display_links = ("first_name","last_name")
 
-    readonly_fields = ("ip_address","request_time","send_message","view_document","download_document","download_form","log_msg_status","jalali_request_time")
+    readonly_fields = ["ip_address","request_time","send_message","view_document","download_document","download_form","log_msg_status","jalali_request_time"]
 
     fieldsets = (
         ('باکس دانلود',{'fields':('view_document','download_document','download_form','documents')}),
@@ -66,7 +66,14 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
     send_message.short_description = "ارسال پیامک"       
 
     def download_form(self,obj):
-        return format_html(f"""<a class="button" href="#">دانلود</a>""")
+        try:
+            word_url = reverse('create-form',args=['word',obj.pk])
+            pdf_url = reverse('create-form',args=['pdf',obj.pk])
+        except:
+            word_url = '#'
+            pdf_url = '#'
+        return format_html(f"""<a class="button" href="{word_url}">Word دانلود</a>&nbsp; - 
+                           <a class="button" href="{pdf_url}">Pdf دانلود</a>""")
     download_form.short_description = "دانلود فرم ثبت نام"
 
     def download_document(self,obj):
@@ -78,6 +85,11 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
         url = obj.documents.url
         return format_html(f"""<a class="button" href="{url}">مشاهده</a>""")
     view_document.short_description = "مشاهده مدارک"
+
+    def get_readonly_fields(self, request, obj=None) :
+        if obj:
+            request.session['secure_form_download'] = obj.pk
+        return super().get_readonly_fields(request, obj)
 
     actions = ['export_excel_information']
 
