@@ -1,14 +1,18 @@
 {% extends 'patterns/base.html' %}
 {% load static %}
 
+{% block header %}<header id="header" class="alt">{% endblock %}
+
 {% block content %}
 <section id="banner">
-    <h2>نوراجم</h2>
-    <p>شرکت توسعه و زیرساخت نوراجم پیشرو در توسعه فیبر نوری</p>
-    <ul class="actions special">
-        <li><a href="#" class="button">پیگیری ثبت نام</a></li>
-        <li><a href="#" class="button primary">ثبت نام سرویس</a></li>
-    </ul>
+    <div class='banner-card'>
+        <h2><b style="color:var(--white-color) !important;">نوراجم</b></h2>
+        <p>شرکت توسعه و زیرساخت نوراجم پیشرو در توسعه فیبر نوری</p>
+        <ul class="actions special">
+            <li><a href="#" class="button">پیگیری ثبت نام</a></li>
+            <li><a href="#" class="button primary">ثبت نام سرویس</a></li>
+        </ul>
+    </div>
 </section>
 
 <!-- Main -->
@@ -27,24 +31,24 @@
             <section>
                 <span class="icon solid major fa-bolt accent2"></span>
                 <h3>سرعت بیشتر</h3>
-                <p>Integer volutpat ante et accumsan commophasellus sed aliquam feugiat lorem aliquet ut enim rutrum phasellus iaculis accumsan dolore magna aliquam veroeros.</p>
+                <p>فیبر نوری داده‌ها را با سرعت بسیار بالاتر از کابل‌های مسی منتقل می‌کند و امکان دسترسی سریع به اینترنت و دانلود فراهم می‌شود.</p>
             </section>
             <section>
                 <span class="icon solid major fa-chart-area accent3"></span>
                 <h3>اتصال پایدار</h3>
-                <p>Integer volutpat ante et accumsan commophasellus sed aliquam feugiat lorem aliquet ut enim rutrum phasellus iaculis accumsan dolore magna aliquam veroeros.</p>
+                <p>برخلاف کابل‌های سنتی، فیبر نوری در برابر نویز و اختلالات محیطی مقاوم است و اتصال پایدار و بدون قطعی طولانی‌مدت ارائه می‌دهد.</p>
             </section>
         </div>
         <div class="features-row">
             <section>
                 <span class="icon solid major fa-cloud accent4"></span>
-                <h3>تاخیر فوق کم </h3>
-                <p>Integer volutpat ante et accumsan commophasellus sed aliquam feugiat lorem aliquet ut enim rutrum phasellus iaculis accumsan dolore magna aliquam veroeros.</p>
+                <h3>تاخیر فوق کم</h3>
+                <p>به دلیل سرعت انتقال نور در فیبر، زمان پاسخ‌گویی (Latency) بسیار کم است و برای بازی آنلاین یا تماس ویدئویی ایده‌آل می‌باشد.</p>
             </section>
             <section>
                 <span class="icon solid major fa-lock accent5"></span>
                 <h3>اتصال ایمن</h3>
-                <p>Integer volutpat ante et accumsan commophasellus sed aliquam feugiat lorem aliquet ut enim rutrum phasellus iaculis accumsan dolore magna aliquam veroeros.</p>
+                <p>سیگنال‌های فیبر نوری به‌راحتی قابل شنود یا سرقت نیستند، بنابراین امنیت بالایی برای انتقال اطلاعات حساس فراهم می‌کنند.</p>
             </section>
         </div>
     </section>
@@ -54,8 +58,8 @@
         </header>
         
     </section>
-    <div class="row">
-        <div class="col-6 col-12-narrower">
+    <div class="row" style="justify-content:center;">
+        {% comment %} <div class="col-6 col-12-narrower">
 
 
             <section class="box special">
@@ -67,13 +71,14 @@
                 </ul>
             </section>
 
-        </div>
-        <div class="col-6 col-12-narrower">
+        </div> {% endcomment %}
+        {% comment %} <div class="col-6 col-12-narrower"> {% endcomment %}
+        <div class="col-12 col-12-narrower">
 
             <section class="box special">
                 <span class="image featured"><img src="{% static 'img/pic03.jpg' %}" alt="" /></span>
                 <h3>در زمینه توسعه فیبرنوری</h3>
-                <p>Integer volutpat ante et accumsan commophasellus sed aliquam feugiat lorem aliquet ut enim rutrum phasellus iaculis accumsan dolore magna aliquam veroeros.</p>
+                <p>شرکت نوراجم با بهره‌گیری از تیم متخصص و تجهیزات پیشرفته، خدمات متنوع و ارزنده‌ای در زمینه نصب و راه‌اندازی شبکه‌های فیبرنوری ارائه می‌دهد. از طراحی و مشاوره اولیه تا پیاده‌سازی کامل زیرساخت، جوش و مفصل‌بندی فیبر، تست و عیب‌یابی، و همچنین پشتیبانی و نگهداری دوره‌ای، همگی توسط کارشناسان مجرب این شرکت انجام می‌شود. هدف ما ایجاد اتصالات پرسرعت، پایدار و ایمن برای پروژه‌های سازمانی، شهری و خانگی است تا مشتریان بتوانند با اطمینان از مزایای فناوری فیبرنوری بهره‌مند شوند.</p>
                 <ul class="actions special">
                     <li><a href="#" class="button alt">بیشتر بخوانید</a></li>
                 </ul>

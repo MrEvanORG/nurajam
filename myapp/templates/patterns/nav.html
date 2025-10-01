@@ -1,26 +1,27 @@
-<header id="header" class="alt">
-    <h1><a href="index.html">Alpha</a> by HTML5 UP</h1>
+{% load static %}
+
+
+    <div class="tlogo-container"><img src="{% static 'img/tci.png' %}" width="35px" /></div>
     <nav id="nav">
         <ul>
-            <li><a href="index.html">خانه</a></li>
+            <li><a href="{% url 'index' %}">خانه</a></li>
             <li>
                 <a href="#" class="icon solid fa-angle-down">صفحات</a>
                 <ul>
-                    <li><a href="generic.html">Generic</a></li>
-                    <li><a href="contact.html">Contact</a></li>
-                    <li><a href="elements.html">Elements</a></li>
+                    <li><a href="">ثبت نام سرویس</a></li>
+                    <li><a href="">پیگیری ثبت نام</a></li>
                     <li>
-                        <a href="#">فرایند ها</a>
+                        <a href="#">فرایند های ثبت نام</a>
                         <ul class="align-right">
                             <li><a href="#">گرفتن شماره تلفن</a></li>
                             <li><a href="#">تایید شماره تلفن</a></li>
-                            <li><a href="#">واردکردن اطلاعات شخصی</a></li>
+                            <li><a href="{% url 'register-personal' %}">واردکردن اطلاعات شخصی</a></li>
                             <li><a href="#">انتخاب سرویس و تنظیم قرارداد</a></li>
                         </ul>
                     </li>
                 </ul>
             </li>
-            <li><a href="#" class="button">پیگیری ثبت نام</a></li>
+            <li><a href="#" class="button">درباره ما</a></li>
         </ul>
     </nav>
 </header>

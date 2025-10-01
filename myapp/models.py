@@ -9,8 +9,31 @@ class User(AbstractUser):
     last_name = models.CharField(max_length=20, verbose_name='نام خانوادگی')
     username = models.CharField(max_length=15, unique=True, verbose_name='نام کاربری (شماره تلفن)')
 
+    role_supervisor = models.BooleanField(verbose_name='نقش (ناظر)',default=False)
+    role_marketer = models.BooleanField(verbose_name='نقش (بازاریاب)',default=False)
+    role_dropagent = models.BooleanField(verbose_name='نقش (مسئول دراپ کشی)',default=False)
+    role_fusionagent = models.BooleanField(verbose_name='نقش (مسئول فیوژن زنی)',default=False)
+
+
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
+        role = ''
+        if self.role_marketer :
+            role += 'بازاریاب '
+        if self.role_dropagent and role == '':
+            role += 'دراپ کش '
+        elif self.role_dropagent and not role == '':
+            role += 'و دراپ کش '
+        if self.role_fusionagent and role == '':
+            role += 'فیوژن زن '
+        elif self.role_fusionagent and not role == '':
+            role += 'و فیوژن زن '
+        if self.role_supervisor and role == '':
+            role += 'ناظر '
+        elif self.role_supervisor and not role == '':
+            role += 'و ناظر ' 
+        
+        
+        return f"{self.first_name} {self.last_name} - {role}"
 
 class OtherInfo(models.Model):
     sip_phone_cost = models.BigIntegerField(verbose_name='هزینه سیپ فون (تومان)')
@@ -74,20 +97,10 @@ def validate_dockphoto_size(image):
         raise ValidationError("حجم عکس نباید بیشتر از 3000 کیلوبایت باشد")
     
 class ServiceRequests(models.Model):
+
     class HouseOwnerStatus(models.TextChoices):
         owner = "owner","مالک"
         renter = "renter","مستاجر"
-
-    class RequestStatus(models.TextChoices):
-        pending_review = "pending review",'در انتظار بازبینی'
-        queued = "queued" , "در صف نصب"
-        done = "done","نصب انجام شده"
-        rejected = "rejected" , "رد به علت ناقض بودن اطلاعات"
-        cantinstall = "cantinstall","عدم امکان دائری"
-
-    class ExecutionStatus(models.TextChoices):
-        completed = "completed","انجام شده"
-        pending = "pending","در انتظار اجرا"
 
     class SubmissionStatus(models.TextChoices):
         registered = "registered","ثبت شده"
@@ -97,6 +110,39 @@ class ServiceRequests(models.Model):
     class PayStatus(models.TextChoices):
         payed = "payed","پرداخت شده"
         pending = "pending","در انتظار پرداخت"
+
+    #---------------------------------------------
+
+    class MarketerFormStatus(models.TextChoices):
+        pending = "pending","در انتظار بررسی مدارک"
+        accepted = "accepted","تایید اطلاعات و مدارک"
+        rejected = "rejected","رد اطلاعات و مدارک"
+
+    class DropStatus(models.TextChoices):
+        pending = "pending","در انتظار بررسی دراپ کشی"
+        queued = "queued","در صف دراپ کشی "
+        accepted = "accepted","دراپ کشی انجام شد"
+        rejected = "rejected","عدم امکان دائری فنی"
+        repending = "repending","دراپ تایید نشد ، در انتظار دراپ کشی مجدد" #hidden
+
+    class SuperVisorStatus(models.TextChoices):
+        pending = "pending","در انتظار بررسی ناظر"
+        # repending = "repending","در انتظار بازبینی مجدد ناظر"
+        accepted = "accepted","دراپ کشی تایید شد"
+        rejected = "rejected","رد و بازبینی دراپ"
+
+    class FusionStatus(models.TextChoices):
+        pending = "pending","در انتظار بررسی فیوژن زنی"
+        queued = "queued","در صف فیوژن زنی"
+        accepted = "accepted","فیوژن زنی انجام شد"
+
+    class FinalizationStatus(models.TextChoices):
+        pending = "pending","در انتظار اتمام کار"
+        ended = "ended","تحویل سرویس و اتمام کار"
+
+    #-----------------------------------------------------
+
+
 
 
     #Personal information
@@ -121,16 +167,22 @@ class ServiceRequests(models.Model):
 
     #drop status
     fat_index = models.CharField(max_length=10,verbose_name='مشخصه FAT',null=True,blank=True)
-    drop_status = models.CharField(max_length=30,choices=ExecutionStatus,default=ExecutionStatus.pending,verbose_name='وضعیت دراپ')
+    marketer_status = models.CharField(max_length=100,choices=MarketerFormStatus,default=MarketerFormStatus.accepted,verbose_name='وضعیت تایید بازاریاب')
+    drop_status = models.CharField(max_length=100,choices=DropStatus,default=DropStatus.pending,verbose_name='وضعیت دراپ')
+    supervisor_status = models.CharField(max_length=100,choices=SuperVisorStatus,default='در انتطار دراپ کشی',verbose_name='وضعیت تایید ناظر')
+    fusion_status = models.CharField(max_length=100,choices=FusionStatus,default="در انتظار تایید ناظر",verbose_name='وضعیت فیوژن')
+    finalization_status = models.CharField(max_length=100,choices=FinalizationStatus,default=FinalizationStatus.pending,verbose_name='وضعیت اتمام کار')
+
+
     outdoor_area = models.PositiveBigIntegerField(verbose_name='متراژ بیرونی (متر)')
     internal_area = models.PositiveBigIntegerField(verbose_name='متراژ داخلی (متر)') 
-    fusion_status = models.CharField(max_length=30,choices=ExecutionStatus,default=ExecutionStatus.pending,verbose_name='وضعیت فیوژن')
     pay_status = models.CharField(max_length=30,choices=PayStatus,default=PayStatus.pending,verbose_name='وضعیت پرداخت')
     submission_status = models.CharField(max_length=30,choices=SubmissionStatus,default=SubmissionStatus.pending,verbose_name='وضعیت ثبت فرم')
     marketer = models.CharField(max_length=50,null=True,blank=True,verbose_name='نام بازاریاب')
 
     #Other information
-    request_status = models.CharField(max_length=230,choices=RequestStatus,default=RequestStatus.pending_review,verbose_name='وضعیت درخواست')
+    request_status = models.CharField(max_length=230,default='pending_review',verbose_name='وضعیت کلی درخواست')
+    # rs_drop = models.CharField(max_length=230,verbose_name='وضعیت درخواستن')
     tracking_code = models.PositiveIntegerField(verbose_name='کد پیگیری',unique=True,null=True,blank=True)
     log_msg_status = models.TextField(verbose_name='لاگ ارسال پیامک',null=True,blank=True)
 

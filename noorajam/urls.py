@@ -22,8 +22,9 @@ from django.views.static import serve
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path('django_admin_secured_login_auth/', super_admin_site.urls),
     path('',include('myapp.urls')),
+    
+    path('django_admin_secured_login_auth/', super_admin_site.urls),
     
     re_path(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}),
     re_path(r'^media/(?P<path>.*)$', serve,{'document_root': settings.MEDIA_ROOT}),

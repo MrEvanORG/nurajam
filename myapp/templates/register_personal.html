@@ -1,0 +1,100 @@
+{% extends 'patterns/base.html' %}
+
+{% block header %}<header id="header" class="reveal">{% endblock %}
+{% block content %}
+<section id="main" class="container medium">
+    <header>
+        <h2>اطلاعات شخصی</h2>
+        <p>جهت تکمیل ثبت نام اطلاعات شخصی را به صورت صحیح وارد کنید</p>
+    </header>
+    <div class="box">
+        <form method="post" action="#" style="text-align:right;">
+            {% csrf_token %}
+            <div class="row gtr-50 gtr-uniform" style="flex-direction:row-reverse;">
+
+                <div class="col-4 col-12-mobilep">
+                    <input type="text" name="first_name" placeholder="نام خانوادگی" required />
+                </div>
+
+                <div class="col-4 col-12-mobilep">
+                    <input type="text" name="last_name" placeholder="نام" required />
+                </div>
+
+                <div class="col-4 col-12-mobilep">
+                    <input type="text" name="father_name" placeholder="نام پدر" required />
+                </div>
+
+                <div class="col-8 col-12-mobilep">
+                    <input type="text" name="national_code" placeholder="کدملی" required />
+                </div>          
+
+                <div class="col-4 col-12-mobilep">
+                    <input type="text" name="bc_number" placeholder="شماره شناسنامه" required />
+                </div>     
+
+                <div class="col-12"><h4>: تاریخ تولد</h4></div>
+
+                <div class="col-4">
+                    <select name="day" id="day" class="form-select" required>
+                        <option value="">روز</option>
+                        {% for d in days %}
+                            <option value="{{ d }}">{{ d }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-4">
+                    <select name="month" id="month" class="form-select" required>
+                        <option value="">ماه</option>
+                        {% for m in months %}
+                            <option value="{{ forloop.counter }}">{{ m }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-4">
+                    <select name="year" id="year" class="form-select" required>
+                        <option value="">سال</option>
+                        {% for y in years %}
+                            <option value="{{ y }}">{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-4 col-12-mobilep"><h4>: مالکیت منزل </h4></div>
+                <div class="col-4 col-12-mobilep">
+                    <input type="radio" id="owner" name="ownerstatus" value="owner" checked required>
+                    <label for="owner">مالک</label>     
+                </div>
+                <div class="col-4 col-12-mobilep">
+                    <input type="radio" id="renter" name="ownerstatus" value="renter" required>
+                    <label for="renter">مستاجر</label>
+                </div>
+
+                <div class="col-6 col-12-mobilep">
+                    <input type="text" name="mobile" placeholder="شماره تلفن همراه" required />
+                </div>
+
+                <div class="col-6 col-12-mobilep">
+                    <input type="text" name="home_phone" placeholder="شماره تلفن منزل (اختیاری)" />
+                </div>
+
+                <div class="col-12">
+                    <input type="text" name="post_code" placeholder="کد پستی" required />
+                </div>
+
+                <div class="col-12">
+                    <textarea name="address" placeholder="آدرس دقیق" rows="5" required></textarea>
+                </div>
+
+                <div class="col-12">
+                    <ul class="actions special">
+                        <li><input type="submit" value="مرحله بعدی" /></li>
+                    </ul>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

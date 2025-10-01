@@ -4,6 +4,8 @@ from . import addons
 
 urlpatterns = [
     path('',views.index,name='index'),
+    path('register/personal_information', views.register_personal, name='register-personal'),
+
     path('send-sms-to-admins/', views.send_sms_page_view, name='send_sms_page'),
     path('create_form/<str:kind>/<int:pk>/', addons.create_form, name='create-form'),
 ]

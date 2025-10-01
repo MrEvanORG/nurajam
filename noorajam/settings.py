@@ -26,9 +26,9 @@ SECRET_KEY = config("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1']
+ALLOWED_HOSTS = ['127.0.0.1','nurajam.ir','www.nurajam.ir']
 
-CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1']
+CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1','https://nurajam.ir','https://www.nurajam.ir']
 
 AUTH_USER_MODEL = 'myapp.User'
 
@@ -42,7 +42,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'admin_reorder'
 ]
+
+ADMIN_REORDER = (
+    ('myapp',('User',)),
+    ('myapp',('ActiveModems','ActivePlans','ActiveLocations')),
+)
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

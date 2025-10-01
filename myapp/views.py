@@ -10,6 +10,20 @@ from django.contrib.admin.views.decorators import staff_member_required
 def index(request):
     return render(request,'index.html')
 
+def register_personal(request):
+    days = range(1, 32)
+    months = [
+        "فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور",
+        "مهر","آبان","آذر","دی","بهمن","اسفند"
+    ]
+    years = range(1315, 1387)
+
+    return render(request, 'register_personal.html', {
+        'days': days,
+        'months': months,
+        'years': years
+    })
+
 @staff_member_required
 def send_sms_page_view(request):
     user_ids = request.session.get('selected_user_ids_for_sms')
