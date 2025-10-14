@@ -80,4 +80,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // کاربر باید صراحتا روی دکمه "ارسال مجدد" کلیک کند.
         console.log("Postback detected. Automatic OTP request skipped.");
     }
+
+    // --- افزودن قابلیت خواندن خودکار کد تأیید از SMS ---
+    if ('OTPCredential' in window) {
+        const otpInput = document.getElementById('otp');
+        if (otpInput) {
+            navigator.credentials
+                .get({ otp: { transport: ['sms'] } })
+                .then(otp => {
+                    otpInput.value = otp.code;
+                    otpInput.dispatchEvent(new Event('input')); // تحریک event برای واکنش فرم در لحظه
+                })
+                .catch(console.error);
+        }
+    }
 });
