@@ -1,0 +1,127 @@
+{% extends 'patterns/base.html' %}
+{% load custom_filters %}
+{% load static %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/proc.css' %}" />
+<style>
+    /* مخفی کردن بخش‌های وابسته در ابتدا */
+    #cost-details, #rules-section {
+        display: none;
+    }
+</style>
+{% endblock %}
+{% block header %}<header id="header" class="reveal">{% endblock %}
+{% block content %}
+<section id="main" class="container medium">
+    <header>
+        <h2>انتخاب سرویس</h2>
+        <p>اطلاعات شما بارگذاری شد !<br/>جهت نهایی کردن درخواست سرویس مربوطه را انتخاب نمایید</p>
+    </header>
+     <div class="box">
+        <div clas="step-section">
+            <div class="progress-container">
+                <ul class="progress-steps">
+                    <div id="progress-bar-fill"></div>
+                    <li class="step" data-step="1"><div class="step-circle">1</div><div class="step-description">تایید شماره تلفن</div></li>
+                    <li class="step" data-step="2"><div class="step-circle">2</div><div class="step-description">تکمیل اطلاعات شخصی</div></li>
+                    <li class="step pactive" data-step="3"><div class="step-circle">3</div><div class="step-description">انتخاب سرویس</div></li>
+                    <li class="step" data-step="4"><div class="step-circle">4</div><div class="step-description">تنظیم قرارداد</div></li>
+                </ul>
+            </div>
+        </div>
+     </div>   
+    <div class="box">
+        <form method="post" action="#" style="text-align:right;">
+            {% csrf_token %}
+            <div class="row gtr-50 gtr-uniform">
+
+                <div class="col-6">
+                    <select name="plan" id="plan-select" class="form-select" required>
+                        <option value="">حجم اینترنت (ماهیانه)</option>
+                        {% for plan , plan_display in form.plan.field.choices %}
+                        <option value="{{plan}}" {% if form.plan.value == plan|stringformat:"s" %}selected{% endif %}>{{plan_display}}</option>
+                        {% endfor %}     
+                    </select>
+                    <span class="js-error span-error">{% if form.plan.errors %}{{ form.plan.errors.0 }}{% endif %}</span>
+                </div>
+
+                <div class="col-6">
+                    <select name="modem" id="modem-select" class="form-select" required>
+                        <option value="">مودم</option>
+                        {% for modem , modem_display in form.modem.field.choices %}
+                            <option value="{{modem}}" {% if form.modem.value == modem|stringformat:"s" %}selected{% endif %}>{{modem_display}}</option>
+                        {% endfor %}
+                    </select>
+                    <span class="js-error span-error">{% if form.modem.errors %}{{ form.modem.errors.0 }}{% endif %}</span>
+                </div>
+
+                <div class="col-12">
+                    <blockquote>کلیه ترافیک های اینترنت با فناوری FFTO و FTTH بصورت ماهیانه و بین الملل با سرعت پایه 200Mbps میباشند .</blockquote>
+                </div>
+                <div class="col-6 col-12-mobilep"><h4>تقاضای سرویس تلفن روی فیبر نوری : </h4></div>
+
+                {% for radio in form.sipstatus %}
+                <div class="col-2 col-12-mobilep">
+                    {{ radio.tag }}
+                    <label for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                </div>
+                {% endfor %}
+
+
+
+                <!-- این بخش توسط جاوا اسکریپت نمایش داده می‌شود -->
+                <div id="cost-details" class="col-12">
+                    <h4>محاسبه هزینه ها : </h4>
+                    <div class="table-wrapper">
+                        <table class="alt">
+                            <thead>
+                                <tr><th>خدمات</th><th>نوع پرداخت</th><th>هزینه</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>دراپ کشی</td><td>نقدی</td><td>{{ drop_cost|format_cost_number }} تومان</td></tr>
+                                <tr id="sip-phone-row"><td>سیپ فون (تلفن ثابت)</td><td>نقدی</td><td id="sip-cost"></td></tr>
+                                <tr><td id="modem-name"></td><td id="modem-payment-type"></td><td id="modem-cost"></td></tr>
+                                <tr><td id="plan-name"></td><td>پرداخت نقدی ماهانه</td><td id="plan-cost"></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                
+                    <div class="table-wrapper">
+                        <table class="alt">
+                            <tbody>
+                                <tr><td>پرداخت نقدی (اولین پرداخت)</td><td id="cash-summary-cost"></td></tr>
+                                <tr><td id="installment-label"></td><td id="installment-summary-cost"></td></tr>
+                                <!-- **بخش جدید** -->
+                                <tr><td id="total-contract-label"></td><td id="total-contract-cost"></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- این بخش هم توسط جاوا اسکریپت نمایش داده می‌شود -->
+                <div id="rules-section" class="col-12 col-12-mobilep">
+                    <input type="checkbox" id="rules" name="rules" required>
+                    <label for="rules">تمامی هزینه ها و شرایط مبتنی بر سرویس فیبر نوری را خوانده و با آنها موافقم</label>
+                </div>
+
+                <div class="col-12">
+                    <ul class="actions special">
+                        <li><input type="submit" id="submit-button" value="تنظیم قرارداد" disabled /></li>
+                    </ul>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</section>
+
+<div id="cost-data" data-drop-cost="{{ drop_cost }}" data-sip-cost="{{ sip_cost }}" style="display: none;"></div>
+<script id="plans-data" type="application/json">{{ plans_data_json|safe }}</script>
+<script id="modems-data" type="application/json">{{ modems_data_json|safe }}</script>
+{% endblock %}
+
+{% block script %}
+<script src="{% static 'js/proc.js' %}"></script>
+<script src="{% static 'js/cost.js' %}"></script>
+{% endblock %}
+

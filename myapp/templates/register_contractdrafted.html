@@ -1,0 +1,44 @@
+{% extends 'patterns/base.html' %}
+{% load static %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/proc.css' %}" />
+{% endblock %}
+{% block header %}<header id="header" class="reveal">{% endblock %}
+{% block content %}
+<section id="main" class="container medium">
+    <header>
+        <h2>ثبت نام سرویس انجام شد</h2>
+        {% comment %} <p> ------------</p> {% endcomment %}
+    </header>
+     <div class="box">
+        <div clas="step-section">
+            <div class="progress-container">
+                <ul class="progress-steps">
+                    <div id="progress-bar-fill"></div>
+                    <li class="step" data-step="1"><div class="step-circle">1</div><div class="step-description">تایید شماره تلفن</div></li>
+                    <li class="step" data-step="2"><div class="step-circle">2</div><div class="step-description">تکمیل اطلاعات شخصی</div></li>
+                    <li class="step" data-step="3"><div class="step-circle">3</div><div class="step-description">انتخاب سرویس</div></li>
+                    <li class="step pactive" data-step="4"><div class="step-circle">4</div><div class="step-description">تنظیم قرارداد</div></li>
+                </ul>
+            </div>
+        </div>
+     </div>   
+    <div class="box">
+        <div class="row gtr-50 gtr-uniform special aln-center">
+            <h3>ثبت نام سرویس شما انجام شد</h3>
+            <p>{{text}}</p>
+            <div class="col-12">
+                <ul class="actions special">
+                    <li><a class="button" id="submit-button" href={% url 'index' %}>بازگشت به برگه نخست</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block script %}
+<script src="{% static 'js/proc.js' %}"></script>
+{% endblock %}
+

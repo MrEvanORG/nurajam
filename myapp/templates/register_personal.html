@@ -1,100 +1,382 @@
 {% extends 'patterns/base.html' %}
+{% load static %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/proc.css' %}" />
+<style>
+    /* استایل‌های CSS شما بدون تغییر باقی می‌مانند */
+    .file-btn { background: var(--button-primary-bg); color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: background 0.3s ease; font-size: 14px; border: none; width: fit-content; }
+    .file-btn:hover { background: var(--button-primary-hover); }
+    .file-btn:active { background: var(--button-primary-active); }
+    .file-btn.success { background: #28a745; }
+    .file-btn.error   { background: #dc3545; }
+    .file-path { font-size: 13px; color: var(--medium-gray); }
+    .file-status { font-size: 14px; font-weight: normal; }
+    .file-status.success { color: #28a745; }
+    .file-status.error   { color: #dc3545; }
+    .file-status.normal  { color: var(--text-color); }
+    
+    /* استایل برای هر دو نوع خطا (JS و Django) */
+    .span-error {
+        color: #dc3545;
+        font-size: 13px;
+        display: block;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}
 
 {% block header %}<header id="header" class="reveal">{% endblock %}
+
 {% block content %}
 <section id="main" class="container medium">
     <header>
         <h2>اطلاعات شخصی</h2>
         <p>جهت تکمیل ثبت نام اطلاعات شخصی را به صورت صحیح وارد کنید</p>
     </header>
+     <div class="box">
+        <div clas="step-section">
+            <div class="progress-container">
+                <ul class="progress-steps">
+                    <div id="progress-bar-fill"></div>
+                    
+                    <li class="step" data-step="1">
+                        <div class="step-circle">1</div>
+                        <div class="step-description">تایید شماره تلفن</div>
+                    </li>
+                    <li class="step pactive" data-step="2">
+                        <div class="step-circle">2</div>
+                        <div class="step-description">تکمیل اطلاعات شخصی</div>
+                    </li>
+                    <li class="step" data-step="3">
+                        <div class="step-circle">3</div>
+                        <div class="step-description">انتخاب سرویس</div>
+                    </li>
+                    <li class="step" data-step="4">
+                        <div class="step-circle">4</div>
+                        <div class="step-description">تنظیم قرارداد</div>
+                    </li>
+                    {% comment %} <li class="step" data-step="5">
+                        <div class="step-circle">5</div>
+                        <div class="step-description">پرداخت</div>
+                    </li> {% endcomment %}
+                </ul>
+            </div>
+        </div>
+     </div>   
     <div class="box">
-        <form method="post" action="#" style="text-align:right;">
+        <form id="personalInfoForm" method="post" action="#" enctype="multipart/form-data" novalidate>
             {% csrf_token %}
-            <div class="row gtr-50 gtr-uniform" style="flex-direction:row-reverse;">
+            <div class="row gtr-50 gtr-uniform">
 
                 <div class="col-4 col-12-mobilep">
-                    <input type="text" name="first_name" placeholder="نام خانوادگی" required />
+                    <input type="text" id="firstName" name="first_name" placeholder="نام" value="{{ form.first_name.value|default_if_none:'' }}" required />
+                    <span class="js-error span-error">{% if form.first_name.errors %}{{ form.first_name.errors.0 }}{% endif %}</span>
                 </div>
 
                 <div class="col-4 col-12-mobilep">
-                    <input type="text" name="last_name" placeholder="نام" required />
+                    <input type="text" id="lastName" name="last_name" placeholder="نام خانوادگی" value="{{ form.last_name.value|default_if_none:'' }}" required />
+                    <span class="js-error span-error">{% if form.last_name.errors %}{{ form.last_name.errors.0 }}{% endif %}</span>
                 </div>
 
                 <div class="col-4 col-12-mobilep">
-                    <input type="text" name="father_name" placeholder="نام پدر" required />
+                    <input type="text" id="fatherName" name="father_name" placeholder="نام پدر" value="{{ form.father_name.value|default_if_none:'' }}" required />
+                    <span class="js-error span-error">{% if form.father_name.errors %}{{ form.father_name.errors.0 }}{% endif %}</span>
                 </div>
 
                 <div class="col-8 col-12-mobilep">
-                    <input type="text" name="national_code" placeholder="کدملی" required />
-                </div>          
+                    <input type="text" id="nationalCode" inputmode="numeric" name="national_code" placeholder="کدملی" value="{{ form.national_code.value|default_if_none:'' }}" class="rtl-placeholder" required />
+                    <span class="js-error span-error">{% if form.national_code.errors %}{{ form.national_code.errors.0 }}{% endif %}</span>
+                </div>
 
                 <div class="col-4 col-12-mobilep">
-                    <input type="text" name="bc_number" placeholder="شماره شناسنامه" required />
-                </div>     
+                    <input type="text" id="bcNumber" inputmode="numeric" name="bc_number" placeholder="شماره شناسنامه" value="{{ form.bc_number.value|default_if_none:'' }}" class="rtl-placeholder" required />
+                    <span class="js-error span-error">{% if form.bc_number.errors %}{{ form.bc_number.errors.0 }}{% endif %}</span>
+                </div>
 
-                <div class="col-12"><h4>: تاریخ تولد</h4></div>
-
+                <div class="col-12"><h4>تاریخ تولد :</h4></div>
                 <div class="col-4">
                     <select name="day" id="day" class="form-select" required>
                         <option value="">روز</option>
-                        {% for d in days %}
-                            <option value="{{ d }}">{{ d }}</option>
+                        {% for d, d_display in form.day.field.choices %}
+                            <option value="{{ d }}" {% if form.day.value == d|stringformat:"s" %}selected{% endif %}>{{ d_display }}</option>
                         {% endfor %}
                     </select>
+                    <span class="js-error span-error">{% if form.day.errors %}{{ form.day.errors.0 }}{% endif %}</span>
                 </div>
-
                 <div class="col-4">
-                    <select name="month" id="month" class="form-select" required>
+                     <select name="month" id="month" class="form-select" required>
                         <option value="">ماه</option>
-                        {% for m in months %}
-                            <option value="{{ forloop.counter }}">{{ m }}</option>
+                        {% for m, m_display in form.month.field.choices %}
+                            <option value="{{ m }}" {% if form.month.value == m|stringformat:"s" %}selected{% endif %}>{{ m_display }}</option>
                         {% endfor %}
                     </select>
+                    <span class="js-error span-error">{% if form.month.errors %}{{ form.month.errors.0 }}{% endif %}</span>
                 </div>
-
                 <div class="col-4">
                     <select name="year" id="year" class="form-select" required>
                         <option value="">سال</option>
-                        {% for y in years %}
-                            <option value="{{ y }}">{{ y }}</option>
+                        {% for y, y_display in form.year.field.choices %}
+                            <option value="{{ y }}" {% if form.year.value == y|stringformat:"s" %}selected{% endif %}>{{ y_display }}</option>
                         {% endfor %}
                     </select>
+                    <span class="js-error span-error">{% if form.year.errors %}{{ form.year.errors.0 }}{% endif %}</span>
                 </div>
 
-                <div class="col-4 col-12-mobilep"><h4>: مالکیت منزل </h4></div>
                 <div class="col-4 col-12-mobilep">
-                    <input type="radio" id="owner" name="ownerstatus" value="owner" checked required>
-                    <label for="owner">مالک</label>     
+                    <h5>عکس شناسنامه یا کارت ملی</h5>
+                    <span style="margin:0;">فرمت ها: png، jpg</span>
                 </div>
-                <div class="col-4 col-12-mobilep">
-                    <input type="radio" id="renter" name="ownerstatus" value="renter" required>
-                    <label for="renter">مستاجر</label>
+                <div class="col-3 col-12-mobilep" style="width:auto">
+                    <input type="file" id="fileInput" name="id_image" hidden required>
+                    <label for="fileInput" class="file-btn">انتخاب فایل</label>
+                </div>
+                <div class="col-5 col-12-mobilep">
+                    <div style="padding-top:7px;"><span id="fileStatus" class="file-status normal">فایلی بارگذاری نشده</span></div>
+                    <span class="js-error span-error">{% if form.id_image.errors %}{{ form.id_image.errors.0 }}{% endif %}</span>
+                </div>
+
+                <div class="col-3 col-12-mobilep"><h4>مالکیت منزل :</h4></div>
+                {% for radio in form.ownerstatus %}
+                <div class="col-2 col-12-mobilep">
+                    {{ radio.tag }}
+                    <label for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                </div>
+                {% endfor %}
+                <div class="col-12">
+                    <span class="js-error span-error">{% if form.ownerstatus.errors %}{{ form.ownerstatus.errors.0 }}{% endif %}</span>
                 </div>
 
                 <div class="col-6 col-12-mobilep">
-                    <input type="text" name="mobile" placeholder="شماره تلفن همراه" required />
+                    <input type="text" name="mobile" placeholder="شماره تلفن همراه" value="{{ form.mobile.value|default_if_none:'' }}" class="rtl-placeholder" readonly required />
+                    <span class="js-error span-error">{% if form.mobile.errors %}{{ form.mobile.errors.0 }}{% endif %}</span>
                 </div>
-
                 <div class="col-6 col-12-mobilep">
-                    <input type="text" name="home_phone" placeholder="شماره تلفن منزل (اختیاری)" />
+                    <input type="text" id="homePhone" inputmode="numeric" name="home_phone" placeholder="شماره تلفن منزل (اختیاری)" value="{{ form.home_phone.value|default_if_none:'' }}" class="rtl-placeholder" />
+                    <span class="js-error span-error">{% if form.home_phone.errors %}{{ form.home_phone.errors.0 }}{% endif %}</span>
+                </div>
+
+                <div class="col-6">
+                   <input type="text" name="post_code" placeholder="کد پستی" value="{{ form.post_code.value|default_if_none:'' }}" class="rtl-placeholder" readonly required />
+                   <span class="js-error span-error">{% if form.post_code.errors %}{{ form.post_code.errors.0 }}{% endif %}</span>
+                </div>
+
+                <div class="col-6">
+                    <select name="location" id="location" class="form-select" required>
+                        <option value="">لیست منطقه ها</option>
+                        {% for lc , lc_display in form.location.field.choices %}
+                        <option value="{{ lc }}" {% if form.location.value == lc|stringformat:"s" %}selected{% endif %}>{{ lc_display }}</option>
+                        {% endfor %}
+                    </select>
+                   <span class="js-error span-error">{% if form.location.errors %}{{ form.location.errors.0 }}{% endif %}</span>
                 </div>
 
                 <div class="col-12">
-                    <input type="text" name="post_code" placeholder="کد پستی" required />
-                </div>
-
-                <div class="col-12">
-                    <textarea name="address" placeholder="آدرس دقیق" rows="5" required></textarea>
+                    <textarea id="address" name="address" placeholder="آدرس دقیق" rows="5" required>{{ form.address.value|default_if_none:'' }}</textarea>
+                    <span class="js-error span-error">{% if form.address.errors %}{{ form.address.errors.0 }}{% endif %}</span>
                 </div>
 
                 <div class="col-12">
                     <ul class="actions special">
-                        <li><input type="submit" value="مرحله بعدی" /></li>
+                        <li><input id="nextStep" type="submit" value="مرحله بعدی" disabled /></li>
                     </ul>
                 </div>
-
             </div>
         </form>
     </div>
 </section>
 {% endblock %}
+<script>
+{% block script %}
+<script src="{% static 'js/proc.js' %}"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // --- انتخاب تمام عناصر مورد نیاز ---
+    const form = document.getElementById("personalInfoForm");
+    const nextStepBtn = document.getElementById("nextStep");
+
+    const firstName = document.getElementById("firstName");
+    const lastName = document.getElementById("lastName");
+    const fatherName = document.getElementById("fatherName");
+    const nationalCode = document.getElementById("nationalCode");
+    const bcNumber = document.getElementById("bcNumber");
+    const homePhone = document.getElementById("homePhone");
+    const address = document.getElementById("address");
+    const location = document.getElementById("location");
+    const day = document.getElementById("day");
+    const month = document.getElementById("month");
+    const year = document.getElementById("year");
+
+    // File input elements
+    const fileInput = document.getElementById("fileInput");
+    const fileBtn = document.querySelector(".file-btn");
+    const fileStatus = document.getElementById("fileStatus");
+    
+    // متغیری برای نگهداری وضعیت اعتبار فایل
+    let isFileValid = false;
+
+    // --- توابع اعتبارسنجی ---
+    const persianRegex = /^[\u0600-\u06FF\s]+$/;
+    const numberRegex = /^[0-9۰-۹٠-٩]+$/;
+
+    function fixNumbers(value) {
+        return value.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+                    .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+    }
+
+    function validateField(input, validationFn) {
+        const errorSpan = input.nextElementSibling;
+        const errorMessage = validationFn(input.value);
+        errorSpan.textContent = errorMessage;
+        return !errorMessage; // true if valid, false if invalid
+    }
+    
+    // --- دیکشنری برای نگهداری وضعیت هر فیلد ---
+    const fieldsValidity = {
+        firstName: false, lastName: false, fatherName: false,
+        nationalCode: false, bcNumber: false, address: false,
+        day: false, month: false, year: false,
+        location:false,
+        homePhone: true, // اختیاری است پس پیش‌فرض معتبر است
+        file: false
+    };
+
+    // --- تابع اصلی برای بررسی کل فرم ---
+    function checkFormValidity() {
+        // وضعیت تمام فیلدها را در دیکشنری بالا بررسی کن
+        const allValid = Object.values(fieldsValidity).every(status => status === true);
+        nextStepBtn.disabled = !allValid;
+    }
+    
+    // --- افزودن Event Listener ها ---
+
+    // اعتبارسنجی نام‌ها (فقط فارسی)
+    [firstName, lastName, fatherName].forEach(input => {
+        input.addEventListener('input', () => {
+            const isValid = validateField(input, value => {
+                if (!value) return "این فیلد الزامی است.";
+                if (!persianRegex.test(value)) return "لطفاً فقط از حروف فارسی استفاده کنید.";
+                return "";
+            });
+            fieldsValidity[input.id] = isValid;
+            checkFormValidity();
+        });
+    });
+
+    // اعتبارسنجی کد ملی
+    nationalCode.addEventListener('input', () => {
+        const isValid = validateField(nationalCode, value => {
+            if (!value) return "کد ملی الزامی است.";
+            const fixedValue = fixNumbers(value);
+            if (!/^\d+$/.test(fixedValue)) return "کد ملی باید فقط شامل اعداد باشد.";
+            if (fixedValue.length !== 10) return "کد ملی باید ۱۰ رقمی باشد.";
+            return "";
+        });
+        fieldsValidity.nationalCode = isValid;
+        checkFormValidity();
+    });
+
+    // اعتبارسنجی شماره شناسنامه
+    bcNumber.addEventListener('input', () => {
+        const isValid = validateField(bcNumber, value => {
+            if (!value) return "شماره شناسنامه الزامی است.";
+            const fixedValue = fixNumbers(value);
+            if (!/^\d+$/.test(fixedValue)) return "شماره شناسنامه باید فقط شامل اعداد باشد.";
+            if (fixedValue.length > 10) return "شماره شناسنامه نمی‌تواند بیش از ۱۰ رقم باشد.";
+            return "";
+        });
+        fieldsValidity.bcNumber = isValid;
+        checkFormValidity();
+    });
+
+    // اعتبارسنجی تلفن منزل (اختیاری)
+    homePhone.addEventListener('input', () => {
+        const isValid = validateField(homePhone, value => {
+            if (value) { // فقط در صورتی که مقداری وارد شده باشد
+                const fixedValue = fixNumbers(value);
+                if (!/^\d+$/.test(fixedValue)) return "تلفن منزل باید فقط شامل اعداد باشد.";
+                if (fixedValue.length !== 8) return "تلفن منزل باید ۸ رقمی باشد.";
+            }
+            return "";
+        });
+        fieldsValidity.homePhone = isValid;
+        checkFormValidity();
+    });
+
+    // اعتبارسنجی فیلدهای متنی و select box های الزامی
+    [address, day, month, year , location].forEach(input => {
+        const eventType = input.tagName === 'SELECT' ? 'change' : 'input';
+        input.addEventListener(eventType, () => {
+            const isValid = validateField(input, value => !value ? "انتخاب این فیلد الزامی است." : "");
+            fieldsValidity[input.id] = isValid;
+            checkFormValidity();
+        });
+    });
+
+    // --- منطق اعتبارسنجی فایل (کد خودتان با کمی تغییر) ---
+    fileInput.addEventListener("change", function () {
+        const file = this.files[0];
+        const errorSpan = fileStatus.parentElement.nextElementSibling;
+        
+        // ریست وضعیت
+        fileBtn.classList.remove("success", "error");
+        fileStatus.classList.remove("success", "error", "normal");
+        errorSpan.textContent = "";
+        fieldsValidity.file = false;
+
+        if (!file) {
+            fileStatus.textContent = "فایلی بارگذاری نشده";
+            fileStatus.classList.add("normal");
+            fileBtn.textContent = "انتخاب فایل";
+            checkFormValidity();
+            return;
+        }
+
+        const maxSize = 3 * 1024 * 1024; // 3MB
+        if (file.size > maxSize) {
+            errorSpan.textContent = "حجم فایل بیش از ۳ مگابایت است.";
+            fileStatus.textContent = "خطا در بارگذاری";
+            fileStatus.classList.add("error");
+            fileBtn.classList.add("error");
+            fileBtn.textContent = "انتخاب دوباره";
+            this.value = "";
+            checkFormValidity();
+            return;
+        }
+
+        const allowedTypes = ["image/png", "image/jpeg"];
+        if (!allowedTypes.includes(file.type)) {
+            errorSpan.textContent = "فرمت فایل نامعتبر است (فقط png, jpg).";
+            fileStatus.textContent = "خطا در بارگذاری";
+            fileStatus.classList.add("error");
+            fileBtn.classList.add("error");
+            fileBtn.textContent = "انتخاب دوباره";
+            this.value = "";
+            checkFormValidity();
+            return;
+        }
+
+        // اگر همه چیز معتبر بود
+        fileStatus.textContent = "فایل معتبر بارگذاری شد";
+        fileStatus.classList.add("success");
+        fileBtn.classList.add("success");
+        fileBtn.textContent = "تغییر فایل";
+        fieldsValidity.file = true; // وضعیت فایل را معتبر کن
+        checkFormValidity(); // وضعیت کل فرم را بررسی کن
+    });
+
+    // اجرای اولیه برای بررسی مقادیر از قبل پر شده (در صورت بازگشت با خطا از سرور)
+    function initialValidation() {
+        document.querySelectorAll('#personalInfoForm input[required], #personalInfoForm select[required], #personalInfoForm textarea[required]').forEach(el => {
+            if (el.type !== 'file') {
+                el.dispatchEvent(new Event(el.tagName === 'SELECT' ? 'change' : 'input'));
+            }
+        });
+    }
+
+    initialValidation();
+
+});
+</script>
+{% endblock %}
+</script>

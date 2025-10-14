@@ -1,0 +1,92 @@
+{% extends 'patterns/base.html' %}
+{% load static %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/proc.css' %}" />
+{% endblock %}
+{% block header %}<header id="header" class="reveal">{% endblock %}
+{% block content %}
+<section id="main" class="container medium">
+    <header>
+        <h2>تایید شماره تلفن</h2>
+        <p>لطفا کد ارسالی پیامک شده به شماره - را وارد کنید</p> 
+    </header>
+     <div class="box">
+        <div clas="step-section">
+            <div class="progress-container">
+                <ul class="progress-steps">
+                    <div id="progress-bar-fill"></div>
+                    
+                    <li class="step pactive" data-step="1">
+                        <div class="step-circle">1</div>
+                        <div class="step-description">تایید شماره تلفن</div>
+                    </li>
+                    <li class="step" data-step="2">
+                        <div class="step-circle">2</div>
+                        <div class="step-description">تکمیل اطلاعات شخصی</div>
+                    </li>
+                    <li class="step" data-step="3">
+                        <div class="step-circle">3</div>
+                        <div class="step-description">انتخاب سرویس</div>
+                    </li>
+                    <li class="step" data-step="4">
+                        <div class="step-circle">4</div>
+                        <div class="step-description">تنظیم قرارداد</div>
+                    </li>
+
+                </ul>
+            </div>
+        </div>
+     </div>   
+    <div class="box special">
+                <form method="post" action="{% url 'register-verifynumber' %}">
+            {% csrf_token %}
+            <div class="row gtr-50 gtr-uniform aln-center">
+                <div class="col-12">
+                    <h3>کد تایید را وارد کنید</h3>
+                    <p>کد ۶ رقمی ارسال شده به شماره {{ phone_number }} را وارد کنید.</p>
+                </div>
+            </div>
+
+            <div class="row gtr-50 gtr-uniform aln-center" style="flex-direction:column;align-items:center;">
+                <div class="col-8 col-12-mobilep">
+                    <h4>شماره اشتباه است؟</h4>
+                    <div class="col-4 col-4-mobilep"><a class="button special small" href="{% url 'register-getnumber' %}">تصحیح شماره</a></div>
+                </div>
+            </div>
+
+            <div class="row gtr-50 gtr-uniform aln-center" style="margin-top:-0.25em;">
+                <div class="col-6 col-10-mobilep">
+                    <input type="number" id="otp" inputmode="numeric" pattern="[0-9]*" name="otp_code" maxlength="6" placeholder="کد پیامک شده" style="margin-bottom:1em;" required />
+                    {% if form.otp_code.errors %}<span class="span-error">{{ form.otp_code.errors.0 }}</span>
+                    {% elif code_invalid %}<span class="span-error">کد وارد شده اشتباه است</span>{% endif %}
+                    <span class="span-error" id="otp-message"></span>
+                </div>
+                
+                <div class="col-12">
+        
+                        <div class="col-10 col-6-mobilep">
+                            <button class="button" id="resend-btn">
+                                <span id="resend-text">ارسال مجدد کد</span>
+                                <span id="resend-timer" style="display:none;"></span>
+                            </button>
+                        </div>
+
+                </div>
+                
+                <div class="col-12">
+                    <div class="col-8 col-10-mobilep">
+                        <input class="button" type="submit" value="تایید کد" />
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}
+{% block script %}
+<script>
+    const isPostback = {{ is_postback|yesno:"true,false" }};
+</script>
+<script src="{% static 'js/proc.js' %}"></script>
+<script src="{% static 'js/otp.js' %}"></script>
+{% endblock %}

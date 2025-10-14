@@ -1,0 +1,169 @@
+/* CSS Reset and Basic Styles */
+:root {
+    --primary-color: #61A5C2; /* آبی اصلی */
+    --white-color-proc: #ffffff; /* آبی خیلی روشن برای پس‌زمینه */
+    --bf-border-color: #cddcf0; /* رنگ حاشیه */
+    --af-border-color: #014F86; /* رنگ حاشیه */
+    --text-color: #333;
+    --text-light-color: #888;
+    --white-color: #fff;
+    --transition-speed: 1.5s; /* سرعت انیمیشن پر شدن */
+    --step-interval: 370ms; /* سرعت فعال شدن هر دایره */
+}
+
+.step-section {
+    font-family: shabnam , "shabnam";
+    background-color: #f4f7f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+}
+
+/* Main Container for the Progress Bar */
+.progress-container {
+    width: 100%;
+    max-width: 800px;
+    /* padding: 40px 20px; */
+}
+
+.progress-steps {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+}
+
+/* The background line for the progress bar */
+.progress-steps::before {
+    content: '';
+    position: absolute;
+    top: 21%;
+    right: 38px;
+    transform: translateY(-50%);
+    height: 4px;
+    width: 85%;
+    background-color: var(--bf-border-color);
+    z-index: 1;
+}
+
+/* The foreground (filling) line for the progress bar */
+#progress-bar-fill {
+    position: absolute;
+    top: 21%;
+    right: 38px;
+    transform: translateY(-50%);
+    height: 4px;
+    width: 0; /* Initially 0, animated by JS */
+    background-color: var(--af-border-color);
+    z-index: 2;
+    transition: width var(--transition-speed) ease-in-out;
+}
+
+/* Individual Step (li) */
+.step {
+    position: relative;
+    z-index: 3;
+    text-align: center;
+    width: 120px;
+}
+
+/* Circle for each step */
+.step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    padding-top:5px ;
+    background-color: var(--white-color);
+    border: 3px solid var(--bf-border-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 10px;
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--text-light-color);
+    transition: all 0.3s ease;
+}
+
+/* Description text below the circle */
+.step-description {
+    font-size: 14px;
+    color: var(--text-light-color);
+    transition: color 0.4s ease;
+}
+
+/* Active/Completed Step Styles */
+.step.active .step-circle {
+    border-color: var(--af-border-color);
+    background-color: var(--primary-color);
+    color: var(--white-color);
+    transform: scale(1.1);
+}
+
+.step.active .step-description {
+    color: var(--heading-color);
+    font-weight: normal;
+}
+
+/* Responsive design for Mobile */
+@media (max-width: 768px) {
+    /* .progress-container {
+        padding: 20px 10px;
+    } */
+
+    .progress-steps {
+        flex-direction: column !important;
+        align-items: flex-start;
+    }
+
+    .progress-steps::before,
+    #progress-bar-fill {
+        display: none;
+    }
+
+    .step {
+        display: flex;
+        align-items: center;
+        text-align: right;
+        width: 100%;
+        margin-bottom: 25px;
+    }
+
+    .step:last-child {
+        margin-bottom: 0;
+    }
+
+    .step-circle {
+        margin: 0;
+        margin-left: 15px;
+    }
+    
+    .step::before {
+        content: '';
+        position: absolute;
+        top: 42px;
+        right: 18px;
+        width: 4px;
+        height: 100%;
+        background-color: var(--white-color-proc);
+        z-index: 1;
+    }
+
+    .step:last-child::before {
+        display: none;
+    }
+    
+    .step.active::before {
+        background-color: var(--primary-color);
+        transition: background-color 0.5s ease;
+    }
+    
+    .step-description {
+        font-size: 16px;
+    }
+}

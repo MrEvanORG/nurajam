@@ -43,6 +43,15 @@ class OtherInfo(models.Model):
     contact_number = models.CharField(max_length=12,verbose_name='شماره تماس با ما')
     site_linenumber = models.CharField(max_length=20,verbose_name='شماره ثابت سایت')
 
+    def save(self,*args,**kwargs):
+        self.pk = 1
+        super().save(*args,**kwargs)
+
+    @classmethod
+    def get_instance(cls):
+        obj , created = cls.objects.get_or_create(pk=1)
+        return obj
+
     class Meta :
         verbose_name = "سایراطلاعات"
         verbose_name_plural = "سایر اطلاعات"
@@ -63,11 +72,11 @@ class ActiveLocations(models.Model):
     
 class ActiveModems(models.Model):
     class PaymentChoices(models.TextChoices):
-        mi3 = "mi3" , "اقساط 3 ماهه"
-        mi6 = "mi6" , "اقساط 6 ماهه"
-        mi12 = "mi12" , "اقساط 12 ماهه"
+        mi3 = "mi3" , "با اقساط 3 ماه"
+        mi6 = "mi6" , "با اقساط 6 ماهه"
+        mi12 = "mi12" , "با اقساط 12 ماهه"
         nocash = "nocashneed","عدم نیاز به پرداخت وجه"
-        cash  = "cash" , "پرداخت نقدی"
+        cash  = "cash" , "با پرداخت نقدی"
 
     name = models.CharField(max_length=200,verbose_name='نام مودم')
     price = models.BigIntegerField(verbose_name='قیمت مودم (تومان)')
@@ -78,7 +87,7 @@ class ActiveModems(models.Model):
         verbose_name_plural = "مودم ها"
 
     def __str__(self):
-        return f"مودم {self.name} با {self.get_payment_method_display()}"
+        return f"{self.name} {self.get_payment_method_display()}"
 
 class ActivePlans(models.Model):
     data = models.IntegerField(verbose_name="حجم ماهانه (گیگابایت)")
@@ -161,27 +170,27 @@ class ServiceRequests(models.Model):
     post_code = models.CharField(max_length=12,verbose_name='کد پستی',unique=True)
 
     #service information
-    sip_phone = models.BooleanField(verbose_name='متقاضی سیپ فون روی فیبرنوری')
-    modem = models.ForeignKey(ActiveModems,on_delete=models.PROTECT,verbose_name='مودم درخواستی')
-    plan = models.ForeignKey(ActivePlans,on_delete=models.PROTECT,verbose_name='طرح درخواستی')
+    sip_phone = models.BooleanField(verbose_name='متقاضی سیپ فون روی فیبرنوری',null=True)
+    modem = models.ForeignKey(ActiveModems,on_delete=models.PROTECT,verbose_name='مودم درخواستی',null=True)
+    plan = models.ForeignKey(ActivePlans,on_delete=models.PROTECT,verbose_name='طرح درخواستی',null=True)
 
     #drop status
     fat_index = models.CharField(max_length=10,verbose_name='مشخصه FAT',null=True,blank=True)
-    marketer_status = models.CharField(max_length=100,choices=MarketerFormStatus,default=MarketerFormStatus.accepted,verbose_name='وضعیت تایید بازاریاب')
+    marketer_status = models.CharField(max_length=100,choices=MarketerFormStatus,default=MarketerFormStatus.pending,verbose_name='وضعیت تایید بازاریاب')
     drop_status = models.CharField(max_length=100,choices=DropStatus,default=DropStatus.pending,verbose_name='وضعیت دراپ')
-    supervisor_status = models.CharField(max_length=100,choices=SuperVisorStatus,default='در انتطار دراپ کشی',verbose_name='وضعیت تایید ناظر')
-    fusion_status = models.CharField(max_length=100,choices=FusionStatus,default="در انتظار تایید ناظر",verbose_name='وضعیت فیوژن')
-    finalization_status = models.CharField(max_length=100,choices=FinalizationStatus,default=FinalizationStatus.pending,verbose_name='وضعیت اتمام کار')
+    supervisor_status = models.CharField(max_length=100,choices=SuperVisorStatus,default=SuperVisorStatus.pending,verbose_name='وضعیت تایید ناظر')
+    fusion_status = models.CharField(max_length=100,choices=FusionStatus,default=FusionStatus.pending,verbose_name='وضعیت فیوژن')
+    finalization_status = models.CharField(max_length=100,choices=FinalizationStatus,default=FinalizationStatus.pending,verbose_name='وضعیت اتمام ثبت نام')
 
 
-    outdoor_area = models.PositiveBigIntegerField(verbose_name='متراژ بیرونی (متر)')
-    internal_area = models.PositiveBigIntegerField(verbose_name='متراژ داخلی (متر)') 
+    outdoor_area = models.PositiveBigIntegerField(verbose_name='متراژ بیرونی (متر)',null=True,blank=True)
+    internal_area = models.PositiveBigIntegerField(verbose_name='متراژ داخلی (متر)',null=True,blank=True) 
     pay_status = models.CharField(max_length=30,choices=PayStatus,default=PayStatus.pending,verbose_name='وضعیت پرداخت')
     submission_status = models.CharField(max_length=30,choices=SubmissionStatus,default=SubmissionStatus.pending,verbose_name='وضعیت ثبت فرم')
     marketer = models.CharField(max_length=50,null=True,blank=True,verbose_name='نام بازاریاب')
 
     #Other information
-    request_status = models.CharField(max_length=230,default='pending_review',verbose_name='وضعیت کلی درخواست')
+    finished_request = models.BooleanField(default=False,verbose_name='وضعیت اتمام درخواست')
     # rs_drop = models.CharField(max_length=230,verbose_name='وضعیت درخواستن')
     tracking_code = models.PositiveIntegerField(verbose_name='کد پیگیری',unique=True,null=True,blank=True)
     log_msg_status = models.TextField(verbose_name='لاگ ارسال پیامک',null=True,blank=True)
@@ -192,6 +201,12 @@ class ServiceRequests(models.Model):
 
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}"
+
+    def add_sms_log(self,message):
+        old  = self.log_msg_status 
+        new = str(old)+"\n"+message
+        self.log_msg_status = new
+        self.save(update_fields=["log_msg_status"])
 
 
     def __str__(self):

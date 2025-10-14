@@ -1,0 +1,74 @@
+{% extends 'patterns/base.html' %}
+{% load static %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/proc.css' %}" />
+{% endblock %}
+{% block header %}<header id="header" class="reveal">{% endblock %}
+{% block content %}
+<section id="main" class="container medium">
+    <header>
+        <h2>وارد کردن شماره تلفن</h2>
+        <p>شماره تلفن خود را وارد کنید در ادامه کد تاییدی برای شما ارسال خواهد شد</p>
+    </header>
+     <div class="box">
+        <div clas="step-section">
+            <div class="progress-container">
+                <ul class="progress-steps">
+                    <div id="progress-bar-fill"></div>
+                    
+                    <li class="step pactive" data-step="1">
+                        <div class="step-circle">1</div>
+                        <div class="step-description">تایید شماره تلفن</div>
+                    </li>
+                    <li class="step" data-step="2">
+                        <div class="step-circle">2</div>
+                        <div class="step-description">تکمیل اطلاعات شخصی</div>
+                    </li>
+                    <li class="step" data-step="3">
+                        <div class="step-circle">3</div>
+                        <div class="step-description">انتخاب سرویس</div>
+                    </li>
+                    <li class="step" data-step="4">
+                        <div class="step-circle">4</div>
+                        <div class="step-description">تنظیم قرارداد</div>
+                    </li>
+                    {% comment %} <li class="step" data-step="5">
+                        <div class="step-circle">5</div>
+                        <div class="step-description">پرداخت</div>
+                    </li> {% endcomment %}
+                </ul>
+            </div>
+        </div>
+     </div>   
+    <div class="box special">
+        <form method="post" action="#">
+            {% csrf_token %}
+            <div class="row gtr-50 gtr-uniform aln-center" >    
+                <div class="col-12">
+                    <h3>شماره تلفن و کد پستی</h3>
+                    <p>لطفا شماره تلفن و کدپستی منزل خود را به صورت صحیح وارد کنید ، این موارد پس از تایید شماره تلفن غیر قابل تغییر خواهند بود</p>
+                </div>
+            </div>
+
+            <div class="row gtr-50 gtr-uniform">
+
+                <div class="col-12" style="margin-top:1em"><div class="row aln-center"><div class="col-8 col-12-mobilep">
+                    <input type="number" id="" inputmode="numeric" pattern="[0-9]*" name="mobile" maxlength="11" placeholder="شماره تلفن همراه" class="rtl-placeholder" {% if form.mobile.value %}value={{form.mobile.value}}{% endif %} required />
+                    {% if form.mobile.errors %}<span class="span-error">{{ form.mobile.errors.0 }}</span>{% endif %}
+                </div></div></div>
+
+                <div class="col-12"><div class="row aln-center"><div class="col-8 col-12-mobilep">
+                    <input type="number" id="" inputmode="numeric" pattern="[0-9]*" name="post_code" maxlength="10"  placeholder="کد پستی" class="rtl-placeholder" {% if form.post_code.value %}value={{form.post_code.value}}{% endif %} required />
+                    {% if form.post_code.errors %}<span class="span-error">{{ form.post_code.errors.0 }}</span>{% endif %}
+                </div></div></div>
+
+                <div class="col-12"><div class="col-6 col-8-mobilep"><input class="button" type="submit" value="مرحله بعدی" /></div></div>
+            </div>
+            
+        </form>
+    </div>
+</section>
+{% endblock %}
+{% block script %}
+<script src="{% static 'js/proc.js' %}"></script>
+{% endblock %}

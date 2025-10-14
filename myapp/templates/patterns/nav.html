@@ -13,10 +13,12 @@
                     <li>
                         <a href="#">فرایند های ثبت نام</a>
                         <ul class="align-right">
-                            <li><a href="#">گرفتن شماره تلفن</a></li>
-                            <li><a href="#">تایید شماره تلفن</a></li>
+                            <li><a href="{% url 'register-index' %}">قوانین و شروع</a></li>
+                            <li><a href="{% url 'register-getnumber' %}">گرفتن شماره تلفن</a></li>
+                            <li><a href="{% url 'register-verifynumber' %}">تایید شماره تلفن</a></li>
                             <li><a href="{% url 'register-personal' %}">واردکردن اطلاعات شخصی</a></li>
-                            <li><a href="#">انتخاب سرویس و تنظیم قرارداد</a></li>
+                            <li><a href="{% url 'register-service' %}">انتخاب سرویس و تنظیم قرارداد</a></li>
+                            <li><a href="{% url 'register-contract' %}">قرار داد تنظیم شد</a></li>
                         </ul>
                     </li>
                 </ul>

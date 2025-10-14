@@ -54,7 +54,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
     list_display = ('first_name','last_name','location','mobile_number')
     list_display_links = ("first_name","last_name")
 
-    readonly_fields = ["ip_address","request_time","send_message","view_document","download_document","download_form","log_msg_status","jalali_request_time"]
+    readonly_fields = ["ip_address","request_time","send_message","view_document","download_document","download_form","log_msg_status","jalali_request_time","tracking_code"]
 
     fieldsets = (
         ('اطلاعات نصب و دراپ', {
@@ -79,7 +79,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
         }),
         ("سایر اطلاعات", {
             'fields': (
-                'request_status','send_message','tracking_code','log_msg_status',
+                'finished_request','send_message','tracking_code','log_msg_status',
                 'jalali_request_time','ip_address'
             ),
             'classes': ('collapse',)
