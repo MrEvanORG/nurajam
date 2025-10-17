@@ -40,7 +40,7 @@
                         <option value="">حجم اینترنت (ماهیانه)</option>
                         {% for plan , plan_display in form.plan.field.choices %}
                         <option value="{{plan}}" {% if form.plan.value == plan|stringformat:"s" %}selected{% endif %}>{{plan_display}}</option>
-                        {% endfor %}     
+                        {% endfor %}    
                     </select>
                     <span class="js-error span-error">{% if form.plan.errors %}{{ form.plan.errors.0 }}{% endif %}</span>
                 </div>
@@ -67,9 +67,6 @@
                 </div>
                 {% endfor %}
 
-
-
-                <!-- این بخش توسط جاوا اسکریپت نمایش داده می‌شود -->
                 <div id="cost-details" class="col-12 pl-0">
                     <h4>محاسبه هزینه ها : </h4>
                     <div class="table-wrapper">
@@ -79,9 +76,14 @@
                             </thead>
                             <tbody>
                                 <tr><td>دراپ کشی</td><td>نقدی</td><td>{{ drop_cost|format_cost_number }} تومان</td></tr>
-                                <tr id="sip-phone-row"><td>سیپ فون (تلفن ثابت)</td><td>نقدی</td><td id="sip-cost"></td></tr>
+                                <tr id="sip-phone-row" style="display: none;"><td>سیپ فون (تلفن ثابت)</td><td>نقدی</td><td id="sip-cost"></td></tr>
                                 <tr><td id="modem-name"></td><td id="modem-payment-type"></td><td id="modem-cost"></td></tr>
-                                <tr><td id="plan-name"></td><td>پرداخت نقدی ماهانه</td><td id="plan-cost"></td></tr>
+                                <tr id="modem-tax-row" style="display: none;">
+                                    <td>مالیات بر ارزش افزوده مودم</td>
+                                    <td>نقدی با اولین قبض</td>
+                                    <td id="modem-tax-cost"></td>
+                                </tr>
+                                <tr><td id="plan-name"></td><td>پرداخت قبض ماهانه</td><td id="plan-cost"></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -89,16 +91,27 @@
                     <div class="table-wrapper">
                         <table class="alt">
                             <tbody>
-                                <tr><td>پرداخت نقدی (اولین پرداخت)</td><td id="cash-summary-cost"></td></tr>
-                                <tr><td id="installment-label"></td><td id="installment-summary-cost"></td></tr>
-                                <!-- **بخش جدید** -->
-                                <tr><td id="total-contract-label"></td><td id="total-contract-cost"></td></tr>
+                                <tr id="cash-payment-row">
+                                    <td>پرداخت نقدی</td>
+                                    <td id="cash-payment-cost"></td>
+                                </tr>
+                                <tr id="first-payment-row">
+                                    <td id="first-payment-label">اولین پرداخت قبض</td>
+                                    <td id="first-payment-cost"></td>
+                                </tr>
+                                <tr id="next-payments-row">
+                                    <td id="next-payments-label"></td>
+                                    <td id="next-payments-cost"></td>
+                                </tr>
+                                <tr id="total-contract-row">
+                                    <td id="total-contract-label"></td>
+                                    <td id="total-contract-cost"></td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- این بخش هم توسط جاوا اسکریپت نمایش داده می‌شود -->
                 <div id="rules-section" class="col-12 col-12-mobilep">
                     <input type="checkbox" id="rules" name="rules" required>
                     <label for="rules">تمامی هزینه ها و شرایط مبتنی بر سرویس فیبر نوری را خوانده و با آنها موافقم</label>
@@ -124,4 +137,3 @@
 <script src="{% static 'js/proc.js' %}"></script>
 <script src="{% static 'js/cost.js' %}"></script>
 {% endblock %}
-

@@ -196,7 +196,7 @@ class PersonalInfoForm(forms.Form):
     
 class ServiceInfoForm(forms.Form):
 
-    # payment_priority = {"mi12": 4,"mi6": 3,"mi3": 2,"nocashneed": 1,"cash": 0,}
+    payment_priority = {"mi12": 4,"mi6": 3,"mi3": 2,"nocashneed": 1,"cash": 0,}
 
     modems_qs = ActiveModems.objects.all()
     MODEMS_SORTED = sorted(modems_qs,key=lambda m: (m.price, {"mi12": 4,"mi6": 3,"mi3": 2,"nocashneed": 1,"cash": 0,}.get(m.payment_method, -1)),reverse=True)

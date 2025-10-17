@@ -80,6 +80,7 @@ class ActiveModems(models.Model):
 
     name = models.CharField(max_length=200,verbose_name='نام مودم')
     price = models.BigIntegerField(verbose_name='قیمت مودم (تومان)')
+    added_tax = models.BigIntegerField(verbose_name='مالیات بر ارزش افزوده (تومان)',help_text='در صورت نبود مالیات عدد صفر را وارد کنید',default=0)
     payment_method = models.CharField(choices=PaymentChoices,max_length=20,verbose_name='شیوه پرداخت')
 
     class Meta :

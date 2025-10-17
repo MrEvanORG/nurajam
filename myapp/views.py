@@ -202,7 +202,8 @@ def register_selectservice(request):
             'name': m.name,
             'price': m.price,
             'payment_method': m.payment_method,
-            'payment_display': m.get_payment_method_display()
+            'payment_display': m.get_payment_method_display(),
+            'tax':m.added_tax,
         }
         for m in ServiceInfoForm.MODEMS_SORTED
     }
