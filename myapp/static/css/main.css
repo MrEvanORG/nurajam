@@ -96,6 +96,30 @@
 .span-error{
 	color:red;
 }
+.pl-0{
+	padding-left: 0 !important;
+}
+.pr-0{
+	padding-right: 0 !important;
+}
+.pt-0{
+	padding-top: 0 !important;
+}
+.pb-0{
+	padding-bottom: 0 !important;
+}
+.ml-0{
+	margin-left: 0 !important;
+}
+.mr-0{
+	margin-right: 0 !important;
+}
+.mt-0{
+	margin-top: 0 !important;
+}
+.mb-0{
+	margin-bottom: 0 !important;
+}
 
 /* Reset */
 
@@ -2650,7 +2674,7 @@
 			}
 
 				ul.icons li:last-child {
-					padding-right: 0;
+					padding-left: 0 !important;
 				}
 
 				ul.icons li .icon {
@@ -3435,8 +3459,8 @@
 				border-left: solid 1px var(--footer-border);
 				display: inline-block;
 				list-style: none;
-				/* margin-right: 1em; */
-				/* padding-right: 1em; */
+				margin-left: 1em;
+				padding-left: 1em;
 			}
 
 				#footer .copyright li:last-child {

@@ -16,47 +16,61 @@ class SmsForm(forms.Form):
         help_text='می‌توانید از متغیرهایی مانند {user.first_name}, {user.last_name}, {user.username} در متن پیام استفاده کنید.'
     )
 class RegiterphonePostForm(forms.Form):
-    mobile = forms.CharField(max_length=11,label='شماره تلفن همراه',required=True)
-    post_code = forms.CharField(max_length=10,label='کد پستی',required=True)
+    mobile = forms.CharField(max_length=11, label='شماره تلفن همراه', required=True)
+    post_code = forms.CharField(max_length=10, label='کد پستی', required=True)
 
     def clean_mobile(self):
-        mobile = self.cleaned_data['mobile']
+        mobile = fix_numbers(str(self.cleaned_data['mobile']))
         if not mobile.isdigit():
             raise ValidationError('شماره تلفن باید فقط شامل اعداد باشد')
         if len(mobile) != 11:
             raise ValidationError('شماره تلفن باید ۱۱ رقم باشد')
-        return fix_numbers(mobile)
-    
+        return mobile
+
     def clean_post_code(self):
-        code = self.cleaned_data['post_code']
+        code = fix_numbers(str(self.cleaned_data['post_code']))
         if not code.isdigit():
             raise ValidationError('کد پستی باید فقط شامل اعداد باشد')
         if len(code) != 10:
             raise ValidationError('کد پستی باید 10 رقم باشد')
-        if ServiceRequests.objects.filter(post_code=code.strip()).exists() :
-            req = ServiceRequests.objects.get(post_code=code.strip())
-            if req.marketer_status == 'accepted':
-                raise ValidationError('این کد پستی قبلا ثبت شده است امکان تغییر اطلاعات وجود ندارد')
+        return code
 
-        return fix_numbers(code)
+    def clean(self):
+        cleaned_data = super().clean()
+        mobile = cleaned_data.get('mobile')
+        code = cleaned_data.get('post_code')
+
+        if not mobile or not code:
+            return cleaned_data
+
+        srv = ServiceRequests.objects.filter(post_code=code.strip())
+        if srv.exists():
+            req = ServiceRequests.objects.get(post_code=code.strip())
+            if req.mobile_number != mobile:
+                self.add_error('post_code', 'امکان تغییر این سرویس با این شماره تلفن وجود ندارد')
+            elif req.marketer_status == 'accepted':
+                self.add_error('post_code', 'سرویس این کد پستی در حال انجام است امکان تغییر اطلاعات وجود ندارد')
+
+        return cleaned_data
     
 class OtpVerifyForm(forms.Form):
     otp_code = forms.CharField(max_length=6,label='کد ارسالی',required=True)
 
     def clean_otp(self):
-        otp_code = self.cleaned_data['otp_code']
+        otp_code = fix_numbers(str(self.cleaned_data['otp_code']))
         if not otp_code.isdigit():
             raise ValidationError('کد وارد شده باید فقط شامل اعداد باشد')
         if len(otp_code) != 6 :
             raise ValidationError('کد ارسالی باید 6 رقمی باشد')
         
-        return fix_numbers(otp_code)
+        return otp_code
     
 import re
 class PersonalInfoForm(forms.Form):
     first_name = forms.CharField(max_length=24, required=True)
     last_name = forms.CharField(max_length=49, required=True)
     father_name = forms.CharField(max_length=24, required=True)
+    originated_from = forms.CharField(max_length=49,required=True)
     national_code = forms.CharField(max_length=10, required=True)
     bc_number = forms.CharField(max_length=10, required=True)
     
@@ -128,6 +142,12 @@ class PersonalInfoForm(forms.Form):
         if len(fixed_number) > 10:
              raise ValidationError('شماره شناسنامه نمی‌تواند بیشتر از ۱۰ رقم باشد.')
         return fixed_number
+
+    def clean_originated_from(self):
+        fromc = self.cleaned_data['originated_from']
+        if not re.match(r'^[\u0600-\u06FF\s]+$', fromc):
+            raise ValidationError('محل صدور باید فقط شامل حروف فارسی باشد')
+        return fromc
 
     def clean_id_image(self):
         image = self.cleaned_data.get('id_image')

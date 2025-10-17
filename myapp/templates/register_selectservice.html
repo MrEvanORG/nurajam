@@ -45,7 +45,7 @@
                     <span class="js-error span-error">{% if form.plan.errors %}{{ form.plan.errors.0 }}{% endif %}</span>
                 </div>
 
-                <div class="col-6">
+                <div class="col-6 pl-0">
                     <select name="modem" id="modem-select" class="form-select" required>
                         <option value="">مودم</option>
                         {% for modem , modem_display in form.modem.field.choices %}
@@ -70,7 +70,7 @@
 
 
                 <!-- این بخش توسط جاوا اسکریپت نمایش داده می‌شود -->
-                <div id="cost-details" class="col-12">
+                <div id="cost-details" class="col-12 pl-0">
                     <h4>محاسبه هزینه ها : </h4>
                     <div class="table-wrapper">
                         <table class="alt">
@@ -104,9 +104,9 @@
                     <label for="rules">تمامی هزینه ها و شرایط مبتنی بر سرویس فیبر نوری را خوانده و با آنها موافقم</label>
                 </div>
 
-                <div class="col-12">
+                <div class="col-12 pl-0">
                     <ul class="actions special">
-                        <li><input type="submit" id="submit-button" value="تنظیم قرارداد" disabled /></li>
+                        <li class="pr-0"><input type="submit" id="submit-button" value="تنظیم قرارداد" disabled /></li>
                     </ul>
                 </div>
 

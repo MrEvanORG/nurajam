@@ -94,6 +94,11 @@
                     <span class="js-error span-error">{% if form.bc_number.errors %}{{ form.bc_number.errors.0 }}{% endif %}</span>
                 </div>
 
+                <div class="col-12">
+                    <input type="text" id="originatedFrom" name="originated_from" placeholder="محل صدور : ( مثال : کرمان / رفسنجان )" value="{{ form.originated_from.value|default_if_none:'' }}" required />
+                    <span class="js-error span-error">{% if form.originated_from.errors %}{{ form.originated_from.errors.0 }}{% endif %}</span>
+                </div>
+
                 <div class="col-12"><h4>تاریخ تولد :</h4></div>
                 <div class="col-4">
                     <select name="day" id="day" class="form-select" required>
@@ -172,11 +177,11 @@
                 </div>
 
                 <div class="col-12">
-                    <textarea id="address" name="address" placeholder="آدرس دقیق" rows="5" required>{{ form.address.value|default_if_none:'' }}</textarea>
+                    <textarea id="address" name="address" placeholder="آدرس ( شامل : شهر / بخش / خیابان / کوچه / پلاک )" rows="5" required>{{ form.address.value|default_if_none:'' }}</textarea>
                     <span class="js-error span-error">{% if form.address.errors %}{{ form.address.errors.0 }}{% endif %}</span>
                 </div>
 
-                <div class="col-12">
+                <div class="col-12 pl-0">
                     <ul class="actions special">
                         <li><input id="nextStep" type="submit" value="مرحله بعدی" disabled /></li>
                     </ul>
@@ -200,6 +205,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const fatherName = document.getElementById("fatherName");
     const nationalCode = document.getElementById("nationalCode");
     const bcNumber = document.getElementById("bcNumber");
+    const originatedFrom = document.getElementById("originatedFrom");
     const homePhone = document.getElementById("homePhone");
     const address = document.getElementById("address");
     const location = document.getElementById("location");
@@ -234,7 +240,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // --- دیکشنری برای نگهداری وضعیت هر فیلد ---
     const fieldsValidity = {
         firstName: false, lastName: false, fatherName: false,
-        nationalCode: false, bcNumber: false, address: false,
+        nationalCode: false, bcNumber: false , originatedFrom:false , address: false,
         day: false, month: false, year: false,
         location:false,
         homePhone: true, // اختیاری است پس پیش‌فرض معتبر است
@@ -251,7 +257,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // --- افزودن Event Listener ها ---
 
     // اعتبارسنجی نام‌ها (فقط فارسی)
-    [firstName, lastName, fatherName].forEach(input => {
+    [firstName, lastName, fatherName , originatedFrom].forEach(input => {
         input.addEventListener('input', () => {
             const isValid = validateField(input, value => {
                 if (!value) return "این فیلد الزامی است.";

@@ -25,11 +25,12 @@
      </div>   
     <div class="box">
         <div class="row gtr-50 gtr-uniform special aln-center">
-            <h3>ثبت نام سرویس شما انجام شد</h3>
-            <p>{{text}}</p>
-            <div class="col-12">
+            <h3 class="pl-0">ثبت نام سرویس شما انجام شد</h3>
+            <p class="pl-0 align-center">کاربر محترم ثبت نام سرویس شما با شماره <b>{{mobile}}</b> و کد پستی <b>{{post_code}}</b> با موفقیت انجام شد . <br/>لازم به ذکر است تا قبل از تایید اطلاعات شما توسط کارمندان امکان ورود مجدد شما با همین کدپستی و شماره تلفن جهت تصحیح اطلاعات وجود دارد . </p>
+            <h4 class="pl-0">کد پیگیری سرویس شما :<code>{{tracking_code}}</code></h4>
+            <div class="col-12 pl-0">
                 <ul class="actions special">
-                    <li><a class="button" id="submit-button" href={% url 'index' %}>بازگشت به برگه نخست</a></li>
+                    <li class="pr-0"><a class="button" id="submit-button" href={% url 'index' %}>بازگشت به برگه نخست</a></li>
                 </ul>
             </div>
         </div>

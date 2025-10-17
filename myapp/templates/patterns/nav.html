@@ -1,7 +1,8 @@
 {% load static %}
 
 
-    <div class="tlogo-container"><img src="{% static 'img/tci.png' %}" width="35px" /></div>
+    {% comment %} <div class="tlogo-container"><img src="{% static 'img/tci.png' %}" width="35px" /></div> {% endcomment %}
+    <h1><a href="index.html">نوراجم </a>پیمانکار شرکت مخابرات ایران</h1>
     <nav id="nav">
         <ul>
             <li><a href="{% url 'index' %}">خانه</a></li>
@@ -10,7 +11,7 @@
                 <ul>
                     <li><a href="">ثبت نام سرویس</a></li>
                     <li><a href="">پیگیری ثبت نام</a></li>
-                    <li>
+                    {% comment %} <li>
                         <a href="#">فرایند های ثبت نام</a>
                         <ul class="align-right">
                             <li><a href="{% url 'register-index' %}">قوانین و شروع</a></li>
@@ -20,7 +21,7 @@
                             <li><a href="{% url 'register-service' %}">انتخاب سرویس و تنظیم قرارداد</a></li>
                             <li><a href="{% url 'register-contract' %}">قرار داد تنظیم شد</a></li>
                         </ul>
-                    </li>
+                    </li> {% endcomment %}
                 </ul>
             </li>
             <li><a href="#" class="button">درباره ما</a></li>

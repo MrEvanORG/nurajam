@@ -13,7 +13,6 @@ from django.contrib.auth.models import Permission
 from django.utils.safestring import mark_safe
 
 
-
 class DisplayOnlyWidget(forms.Widget):
     def __init__(self, text, color="black", *args, **kwargs):
         self.text = text
@@ -54,20 +53,24 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
     list_display = ('first_name','last_name','location','mobile_number')
     list_display_links = ("first_name","last_name")
 
-    readonly_fields = ["ip_address","request_time","send_message","view_document","download_document","download_form","log_msg_status","jalali_request_time","tracking_code"]
+    readonly_fields = ["ip_address","request_time","send_message","documents_box","download_form","log_msg_status","jalali_request_time","tracking_code"]
 
     fieldsets = (
-        ('اطلاعات نصب و دراپ', {
-            'fields': ('fat_index','outdoor_area','internal_area','pay_status','marketer'),
-            # 'classes': ('collapse','open')
+        ('وضعیت نصب', {
+            'fields': (),
+            'classes': ('collapse',)
+        }),
+        ('اطلاعات دراپ', {
+            'fields': ('outdoor_area','internal_area','fat_index','odc_index','pole_count','headpole_count','hook_count'),
+            'classes': ('collapse',)
         }),
         ('باکس دانلود', {
-            'fields': ('view_document','download_document','download_form','documents'),
+            'fields': ('documents_box','download_form','documents'),
             'classes': ('collapse',)
         }),
         ('اطلاعات شخصی', {
             'fields': (
-                'first_name', 'last_name', 'father_name', 'national_code',
+                'first_name', 'last_name', 'father_name', 'national_code','originated_from',
                 'bc_number', 'birthday','landline_number','mobile_number',
                 'address','location','post_code','house_is_owner',
             ),
@@ -102,21 +105,21 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
             word_url = reverse('create-form',args=['word',obj.pk])
             pdf_url = reverse('create-form',args=['pdf',obj.pk])
         except:
-            word_url = '#'
-            pdf_url = '#'
+            return format_html("-")
+
         return format_html(f"""<a class="button" href="{word_url}">Word دانلود</a>&nbsp; - 
                            <a class="button" href="{pdf_url}">Pdf دانلود</a>""")
-    download_form.short_description = "دانلود فرم ثبت نام"
+    download_form.short_description = "دانلود فرم ثبت نام" # type: ignore
 
-    def download_document(self,obj):
+    def documents_box(self,obj):
         url = obj.documents.url
-        return format_html(f"""<a class="button" href="{url}" target=_blank download>دانلود</a>""")
-    download_document.short_description = "دانلود مدارک"
+        return format_html(f"""<a class="button" href="{url}" target=_blank download>دانلود</a> - <a class="button" href="{url}">مشاهده</a>""")
+    documents_box.short_description = "بخش مدارک" # type: ignore
 
-    def view_document(self,obj):
-        url = obj.documents.url
-        return format_html(f"""<a class="button" href="{url}">مشاهده</a>""")
-    view_document.short_description = "مشاهده مدارک"
+    def documents_upload(self,obj):
+        return format_html("""<input type="file" name="documents" accept="imeage/*" required id="id_documents" />""")
+    documents_upload.short_description = 'بارگذاری مدارک'
+
 
     def formfield_for_choice_field(self, db_field, request, **kwargs):
         formfield = super().formfield_for_choice_field(db_field, request, **kwargs)
@@ -169,7 +172,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
         fieldsets = list(super().get_fieldsets(request, obj))
 
         for i, fs in enumerate(fieldsets):
-            if fs[0] != 'اطلاعات نصب و دراپ':
+            if fs[0] != 'وضعیت نصب':
                 continue
 
             base_fields = list(fs[1].get('fields', ()))

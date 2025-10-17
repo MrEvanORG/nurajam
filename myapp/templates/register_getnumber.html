@@ -44,25 +44,33 @@
         <form method="post" action="#">
             {% csrf_token %}
             <div class="row gtr-50 gtr-uniform aln-center" >    
-                <div class="col-12">
+                <div class="col-12 pl-0">
                     <h3>شماره تلفن و کد پستی</h3>
                     <p>لطفا شماره تلفن و کدپستی منزل خود را به صورت صحیح وارد کنید ، این موارد پس از تایید شماره تلفن غیر قابل تغییر خواهند بود</p>
                 </div>
             </div>
 
-            <div class="row gtr-50 gtr-uniform">
+            <div class="row gtr-50 gtr-uniform aln-center">
 
-                <div class="col-12" style="margin-top:1em"><div class="row aln-center"><div class="col-8 col-12-mobilep">
-                    <input type="number" id="" inputmode="numeric" pattern="[0-9]*" name="mobile" maxlength="11" placeholder="شماره تلفن همراه" class="rtl-placeholder" {% if form.mobile.value %}value={{form.mobile.value}}{% endif %} required />
-                    {% if form.mobile.errors %}<span class="span-error">{{ form.mobile.errors.0 }}</span>{% endif %}
-                </div></div></div>
+                <div class="col-8 pl-0" style="margin-top:1em">
+                    <div class="row aln-center">
+                        <div class="col-8 col-10-mobilep">
+                            <input type="number" id="" inputmode="numeric" pattern="[0-9]*" name="mobile" maxlength="11" placeholder="شماره تلفن همراه" class="rtl-placeholder" {% if form.mobile.value %}value={{form.mobile.value}}{% endif %} required />
+                            {% if form.mobile.errors %}<span class="span-error">{{ form.mobile.errors.0 }}</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
 
-                <div class="col-12"><div class="row aln-center"><div class="col-8 col-12-mobilep">
-                    <input type="number" id="" inputmode="numeric" pattern="[0-9]*" name="post_code" maxlength="10"  placeholder="کد پستی" class="rtl-placeholder" {% if form.post_code.value %}value={{form.post_code.value}}{% endif %} required />
-                    {% if form.post_code.errors %}<span class="span-error">{{ form.post_code.errors.0 }}</span>{% endif %}
-                </div></div></div>
+                <div class="col-8 pl-0">
+                    <div class="row aln-center">
+                        <div class="col-8 col-10-mobilep">
+                            <input type="number" id="" inputmode="numeric" pattern="[0-9]*" name="post_code" maxlength="10"  placeholder="کد پستی" class="rtl-placeholder" {% if form.post_code.value %}value={{form.post_code.value}}{% endif %} required />
+                            {% if form.post_code.errors %}<span class="span-error">{{ form.post_code.errors.0 }}</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
 
-                <div class="col-12"><div class="col-6 col-8-mobilep"><input class="button" type="submit" value="مرحله بعدی" /></div></div>
+                <div class="col-12 pl-0"><div class="col-6 col-8-mobilep"><input class="button" type="submit" value="مرحله بعدی" /></div></div>
             </div>
             
         </form>

@@ -121,6 +121,7 @@ def register_personal(request):
                     'father_name': instance.father_name,
                     'national_code': instance.national_code,
                     'bc_number': instance.bc_number,
+                    'originated_from':instance.originated_from,
                     'year': year,
                     'month': month,
                     'day': day,
@@ -131,8 +132,7 @@ def register_personal(request):
                     'id_image': instance.documents,
                 })
             except ValueError as e:
-                print(e)
-    print(initial_data)
+                pass
 
     if request.method == 'POST':
         form = PersonalInfoForm(request.POST, request.FILES)
@@ -148,6 +148,7 @@ def register_personal(request):
                 "father_name" : form.cleaned_data['father_name'],
                 "national_code" : form.cleaned_data['national_code'],
                 "bc_number" : form.cleaned_data['bc_number'],
+                "originated_from":form.cleaned_data['originated_from'],
                 "birthday" : birth,
                 "documents" : form.cleaned_data['id_image'],
                 "mobile_number" : initial_data.get('mobile'),
@@ -162,13 +163,14 @@ def register_personal(request):
             if created:
                 tracking_code = generate_tracking_code()
                 rq.tracking_code = tracking_code
-                sms_result = send_system_to_user_message(phone=initial_data.get('mobile'),message='کاربر گرامی مشخصات شما در کارتابل سایت بارگذاری شد جهت تکمیل ثبت نام سرویس مورد نظر خود را در منوی پیش رو انتخاب کنید \nلغو 11')
+                # sms_result = send_system_to_user_message(phone=initial_data.get('mobile'),message='کاربر گرامی مشخصات شما در کارتابل سایت بارگذاری شد جهت تکمیل ثبت نام سرویس مورد نظر خود را در منوی پیش رو انتخاب کنید \nلغو 11')
             else:
-                sms_result = send_system_to_user_message(phone=initial_data.get('mobile'),message='کاربر گرامی مشخصات جدید شما در کارتابل سایت بارگذاری شد پس از انتخاب سرویس در منوی پیش رو ثبت نام شما پایان میپذیرد .\nلغو11')
+                pass
+                # sms_result = send_system_to_user_message(phone=initial_data.get('mobile'),message='کاربر گرامی مشخصات جدید شما در کارتابل سایت بارگذاری شد پس از انتخاب سرویس در منوی پیش رو ثبت نام شما پایان میپذیرد .\nلغو11')
 
-            from django.utils import timezone
-            sms_log = f'ارسال پیامک وضعیت | { to_jalali_persian(timezone.now())} | {sms_result}'
-            rq.add_sms_log(sms_log)
+            # from django.utils import timezone
+            # sms_log = f'ارسال پیامک وضعیت | { to_jalali_persian(timezone.now())} | {sms_result}'
+            # rq.add_sms_log(sms_log)
             rq.save()
             session.update({'personal_registered':True})
             request.session['register'] = session
@@ -233,15 +235,18 @@ def register_selectservice(request):
         if form.is_valid() :
             from django.shortcuts import get_object_or_404
             rq = get_object_or_404(ServiceRequests,post_code=initial_data.get('post_code'))
+
             modem = get_object_or_404(ActiveModems,id=int(form.cleaned_data['modem']))
             plan = get_object_or_404(ActivePlans,id=int(form.cleaned_data['plan']))
+
             rq.sip_phone = True if form.cleaned_data['sipstatus'] == 'true' else False
             rq.plan = plan
             rq.modem = modem
             rq.finished_request = True
+
             rq.save(update_fields=['sip_phone','modem','plan','finished_request'])
             from .addons import send_system_to_user_message
-            sms_result = send_system_to_user_message(phone=initial_data.get('mobile'),message=f'کاربر گرامی قبت نام شما با موفقیت انجام شد\nکد پیگیری سرویس شما : {rq.tracking_code}\nلغو11')
+            sms_result = send_system_to_user_message(phone=initial_data.get('mobile'),message=f'کاربر گرامی ثبت نام سرویس شما با موفقیت انجام شد\nکد پیگیری سرویس شما : {rq.tracking_code}\nلغو11')
             from django.utils import timezone
             sms_log = f'ارسال پیامک وضعیت | { to_jalali_persian(timezone.now())} | {sms_result}'
             rq.add_sms_log(sms_log)
@@ -250,6 +255,7 @@ def register_selectservice(request):
                 "service_registered":True,
                 "tracking_code":rq.tracking_code,
             })
+            print('session updated')
             request.session['register'] = session
             return redirect(register_contractdrafted)
         else:
@@ -276,13 +282,14 @@ def register_contractdrafted(request):
 
     service_registered = session.get('service_registered',None)
     tracking_code = session.get('tracking_code',None)
-    if (not session) or (not service_registered) or (not service_registered == True) or (not tracking_code):
+    if (service_registered == None) or (tracking_code == None):
+        print("not sessiom")
         return redirect(register_selectservice)
     
     initial_data = {
         'mobile': session.get('phone_number',None),
         'post_code': session.get('post_code',None), 
-        'text':f'کاربر گرامی ثبت نام شما با شماره {session.get('phone_number')} و کد پستی {session.get('post_code')} با موفقیت انجام شد \nکد پیگیری سرویس شما : {tracking_code}'
+        'tracking_code':tracking_code,
     }
     del request.session['register']
 
