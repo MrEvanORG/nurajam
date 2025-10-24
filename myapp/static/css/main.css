@@ -61,7 +61,7 @@
   
 
   --banner-overlay: url("../img/overlay.png");
-  --banner-image: url("../img/banner.avif");
+  --banner-image: url("../img/banner.webp");
   
 
   --cta-input-bg: rgba(255, 255, 255, 0.15);
@@ -3709,7 +3709,7 @@
 				transition: transform 0.5s ease;
 				display: block;
 				height: 44px;
-				left: 0;
+				right: 0;
 				position: fixed;
 				top: 0;
 				width: 100%;
@@ -3719,7 +3719,7 @@
 				#navButton .toggle {
 					text-decoration: none;
 					height: 100%;
-					left: 0;
+					right: 0;
 					position: absolute;
 					top: 0;
 					width: 100%;
