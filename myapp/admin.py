@@ -63,7 +63,8 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
             user.role_supervisor,
             user.role_marketer,
             user.role_dropagent,
-            user.role_fusionagent
+            user.role_fusionagent,
+            user.role_operator,
         ]
         active_roles = sum(1 for r in roles if r)
 
@@ -94,6 +95,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
             "role_marketer": ("location", "finalization_status", "marketer_status", "pay_status", "submission_status"),
             "role_supervisor": ("location", "supervisor_status"),
             "role_dropagent": ("location", "drop_status"),
+            "role_operator":("location","submission_status"),
             "role_fusionagent": ("location", "finalization_status", "fusion_status"),
         }
 
@@ -176,6 +178,13 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
                     return format_html('<span style="color: red ;">● دراپ رد شد</span>')
                 elif obj.supervisor_status == "pending":
                     return format_html('<span style="color: orange ;">● در انتظار بررسی ناظر</span>')
+                
+            if user.role_operator:
+                if obj.submission_status == "registered":
+                    return format_html('<span style="color: green;">● فرم ثبت شده</span>')
+                elif obj.submission_status == "pending":
+                    return format_html('<span style="color: orange;">● در انتظار ثبت فرم</span>')
+
             
             if user.role_fusionagent:
                 if obj.fusion_status == "accepted":
@@ -575,7 +584,6 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
                 pass
      
         return form
-    
     
     actions = ['export_excel_information']
 

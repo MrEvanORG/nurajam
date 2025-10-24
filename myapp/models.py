@@ -10,6 +10,7 @@ class User(AbstractUser):
     username = models.CharField(max_length=15, unique=True, verbose_name='نام کاربری (شماره تلفن)')
 
     role_supervisor = models.BooleanField(verbose_name='نقش (ناظر)',default=False)
+    role_operator = models.BooleanField(verbose_name='نقش (اپراتور مخابرات)',default=False)
     role_marketer = models.BooleanField(verbose_name='نقش (بازاریاب)',default=False)
     role_dropagent = models.BooleanField(verbose_name='نقش (مسئول دراپ کشی)',default=False)
     role_fusionagent = models.BooleanField(verbose_name='نقش (مسئول فیوژن زنی)',default=False)
@@ -137,7 +138,6 @@ class ServiceRequests(models.Model):
     class SubmissionStatus(models.TextChoices):
         registered = "registered","ثبت شده"
         pending = "pending","در انتظار ثبت"
-        rejected = "rejected","عدم امکان ثبت"
 
     class PayStatus(models.TextChoices):
         payed = "payed","پرداخت شده"
