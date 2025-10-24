@@ -105,7 +105,7 @@ def register_personal(request):
 
     initial_data = {
         'mobile': session.get('phone_number', '09123456789'),
-        'post_code': session.get('post_code',None), 
+        'post_code': session.get('post_code',None),
     }
     instance = ServiceRequests.objects.filter(post_code= str(initial_data.get('post_code')).strip() ).first()
     # print(instance)
@@ -178,7 +178,7 @@ def register_personal(request):
     else:
         form = PersonalInfoForm(initial=initial_data)
 
-    
+
     return render(request, 'register_personal.html', {'form': form})
 
 def register_selectservice(request):
@@ -376,3 +376,6 @@ def send_sms_page_view(request):
         'form': form,
     }
     return render(request, 'admin/send_sms_form.html', context)
+@staff_member_required
+def send_sms_page_view_user(request):
+    pass

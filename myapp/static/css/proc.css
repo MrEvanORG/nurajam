@@ -92,6 +92,7 @@
 
 /* Description text below the circle */
 .step-description {
+    line-height: normal;
     font-size: 14px;
     color: var(--text-light-color);
     transition: color 0.4s ease;

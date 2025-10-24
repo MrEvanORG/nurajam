@@ -16,6 +16,7 @@ class User(AbstractUser):
 
 
     def __str__(self):
+        if self.is_superuser:return f"{self.first_name} {self.last_name} - ابرکاربر"
         role = ''
         if self.role_marketer :
             role += 'بازاریاب '
@@ -34,6 +35,26 @@ class User(AbstractUser):
         
         
         return f"{self.first_name} {self.last_name} - {role}"
+
+    def get_role(self):
+        if self.is_superuser: return "ابرکاربر"
+        role = ''
+        if self.role_marketer :
+            role += 'بازاریاب '
+        if self.role_dropagent and role == '':
+            role += 'دراپ کش '
+        elif self.role_dropagent and not role == '':
+            role += 'و دراپ کش '
+        if self.role_fusionagent and role == '':
+            role += 'فیوژن زن '
+        elif self.role_fusionagent and not role == '':
+            role += 'و فیوژن زن '
+        if self.role_supervisor and role == '':
+            role += 'ناظر '
+        elif self.role_supervisor and not role == '':
+            role += 'و ناظر ' 
+        
+        return f"{role}"  
 
 class OtherInfo(models.Model):
     sip_phone_cost = models.BigIntegerField(verbose_name='هزینه سیپ فون (تومان)')
@@ -82,6 +103,7 @@ class ActiveModems(models.Model):
     price = models.BigIntegerField(verbose_name='قیمت مودم (تومان)')
     added_tax = models.BigIntegerField(verbose_name='مالیات بر ارزش افزوده (تومان)',help_text='در صورت نبود مالیات عدد صفر را وارد کنید',default=0)
     payment_method = models.CharField(choices=PaymentChoices,max_length=20,verbose_name='شیوه پرداخت')
+
 
     class Meta :
         verbose_name = "مودم"
@@ -200,6 +222,11 @@ class ServiceRequests(models.Model):
     request_time = models.DateTimeField(auto_now_add=True,null=True,blank=True,verbose_name='تاریخ درخواست')
     ip_address = models.GenericIPAddressField(null=True,blank=True,verbose_name='آیپی درخواست دهنده')
 
+    def clean(self):
+        super().clean()
+        if self.tracking_code:
+            if not len(str(self.tracking_code)) == 6:
+                raise ValidationError('کد پیگیری حتما باید 6 رقمی باشد .')
 
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}"

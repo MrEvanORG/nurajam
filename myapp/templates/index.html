@@ -1,12 +1,13 @@
 {% extends 'patterns/base.html' %}
 {% load static %}
-
+{% block head %}<link rel="stylesheet" href="{% static 'css/bg-moving.css' %}" rel="stylesheet"/>{% endblock %}
 {% block header %}<header id="header" class="alt">{% endblock %}
 
 {% block content %}
 <section id="banner">
     <div class='banner-card'>
-        <h2>نوراجم</h2>
+        <img class="bn-img" src="{% static 'img/nurajam.png' %}"/>
+        {% comment %} <h2>نوراجم</h2> {% endcomment %}
         <p>شرکت توسعه زیرساخت نوراجم پیشرو در توسعه فیبر نوری</p>
         <ul class="actions special">
             <li><a href="{% url 'register-index' %}" class="button primary">ثبت نام سرویس</a></li>
@@ -14,6 +15,11 @@
         </ul>
     </div>
 </section>
+
+
+
+
+
 
 <!-- Main -->
 <section id="main" class="container">
@@ -58,8 +64,8 @@
         </header>
         
     </section>
-    <div class="row" style="justify-content:center;">
-        {% comment %} <div class="col-6 col-12-narrower">
+    <div class="row aln-center" style="justify-content:center;direction:ltr;">
+         <div class="col-6 col-12-narrower">
 
 
             <section class="box special">
@@ -71,9 +77,9 @@
                 </ul>
             </section>
 
-        </div> {% endcomment %}
-        {% comment %} <div class="col-6 col-12-narrower"> {% endcomment %}
-        <div class="col-12 col-12-narrower">
+        </div>
+        <div class="col-6 col-12-narrower">
+        {% comment %} <div class="col-12 col-12-narrower"> {% endcomment %}
 
             <section class="box special">
                 <span class="image featured"><img src="{% static 'img/pic03.jpg' %}" alt="" /></span>
@@ -89,3 +95,5 @@
 
 </section>
 {% endblock %}
+
+{% block script %}<script src="{% static 'js/bg-moving.js' %}"></script>{% endblock %}

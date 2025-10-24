@@ -14,7 +14,8 @@ urlpatterns = [
     path('register/select_service', views.register_selectservice, name='register-service'),
     path('register/contract_drafted', views.register_contractdrafted, name='register-contract'),
 
-
     path('send-sms-to-admins/', views.send_sms_page_view, name='send_sms_page'),
+
+    path('send-sms-to-user', views.send_sms_page_view_user, name='send_user_message'),
     path('create_form/<str:kind>/<int:pk>/', addons.create_form, name='create-form'),
 ]

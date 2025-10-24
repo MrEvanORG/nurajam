@@ -36,12 +36,12 @@ AUTH_USER_MODEL = 'myapp.User'
 
 INSTALLED_APPS = [
     'django.contrib.auth',
+    'django.contrib.staticfiles',
     'myapp.apps.MyappConfig',
     'django.contrib.admin',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
     'admin_reorder'
 ]
 

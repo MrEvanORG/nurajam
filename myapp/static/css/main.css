@@ -67,7 +67,7 @@
   --cta-input-bg: rgba(255, 255, 255, 0.15);
   
 
-  --box-shadow :2px 1px 30px 0px #4d4c4c2f;
+  --box-shadow :1px 1px 25px 0px #24232325;
   
 
 }
@@ -92,6 +92,9 @@
 }
 .tlogo-container a{
 	text-decoration: none;
+}
+.bn-img{
+	width:310px
 }
 .span-error{
 	color:red;
@@ -623,6 +626,9 @@
 				}
 
 		@media screen and (max-width: 1680px) {
+			.bn-img{
+				width: 290px;
+			}
 
 			.row {
 				display: flex;
@@ -868,6 +874,9 @@
 		}
 
 		@media screen and (max-width: 1280px) {
+			.bn-img{
+				width: 275px;
+			}
 
 			.row {
 				display: flex;
@@ -1113,6 +1122,9 @@
 		}
 
 		@media screen and (max-width: 980px) {
+			.bn-img{
+				width: 248px;
+			}
 
 			.row {
 				display: flex;
@@ -1358,6 +1370,9 @@
 		}
 
 		@media screen and (max-width: 840px) {
+			.bn-img{
+				width: 238px;
+			}
 
 			.row {
 				display: flex;
@@ -1603,6 +1618,9 @@
 		}
 
 		@media screen and (max-width: 736px) {
+			.bn-img{
+				width: 240px;
+			}
 
 			.row {
 				display: flex;
@@ -1848,6 +1866,9 @@
 		}
 
 		@media screen and (max-width: 480px) {
+			.bn-img{
+				width: 245px;
+			}
 
 			.row {
 				display: flex;
@@ -2479,7 +2500,7 @@
 		.box .image.featured {
 			border-radius: 0;
 			display: block;
-			margin: 3em -3em 3em 0;
+			margin: 3em 0 3em -3em;
 			position: relative;
 			width: calc(100% + 6em);
 		}
@@ -2560,31 +2581,31 @@
 		}
 
 			.icon.major:before {
-				font-size: 2.5em;
+				font-size: 2em;
 			}
 
 			.icon.major.accent1 {
-				background: var(--icon-accent1);
-				color: var(--white);
+				background: var(--secondary-color);
+				color: var(--header-button-border);
 			}
 
 			.icon.major.accent2 {
-				background: var(--icon-accent2);
+				background: var(--medium-gray);
 				color: var(--white);
 			}
 
 			.icon.major.accent3 {
-				background: var(--icon-accent3);
+				background: var(--table-header-color);
 				color: var(--white);
 			}
 
 			.icon.major.accent4 {
-				background: var(--icon-accent4);
+				background: var(--table-header-color);
 				color: var(--white);
 			}
 
 			.icon.major.accent5 {
-				background: var(--icon-accent5);
+				background: var(--medium-gray);
 				color: var(--white);
 			}
 
