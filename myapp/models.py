@@ -33,6 +33,10 @@ class User(AbstractUser):
             role += 'ناظر '
         elif self.role_supervisor and not role == '':
             role += 'و ناظر ' 
+        if self.role_operator and role == '':
+            role += 'اپراتور'
+        elif self.role_operator and not role == '':
+            role += 'و اپراتور'
         
         
         return f"{self.first_name} {self.last_name} - {role}"
@@ -54,6 +58,10 @@ class User(AbstractUser):
             role += 'ناظر '
         elif self.role_supervisor and not role == '':
             role += 'و ناظر ' 
+        if self.role_operator and role == '':
+            role += 'اپراتور'
+        elif self.role_operator and not role == '':
+            role += 'و اپراتور'       
         
         return f"{role}"  
 
@@ -203,7 +211,15 @@ class ServiceRequests(models.Model):
     headpole_count = models.PositiveIntegerField(verbose_name='تعداد سر تیر',null=True,blank=True)
     hook_count = models.PositiveIntegerField(verbose_name='تعداد قلاب',null=True,blank=True)
     #-----------------------------------------------------
+
+    #tci service status
+    #-----------------------------------------------------
+    virtual_number = models.CharField(max_length=10,verbose_name='شماره مجازی',null=True,blank=True)
+    port_number = models.PositiveIntegerField(verbose_name='شماره پورت',null=True,blank=True)
+    #-----------------------------------------------------
+
     #proc status
+    #-----------------------------------------------------
     marketer_status = models.CharField(max_length=100,choices=MarketerFormStatus,default=MarketerFormStatus.pending,verbose_name='وضعیت تایید بازاریاب')
     drop_status = models.CharField(max_length=100,choices=DropStatus,default=DropStatus.pending,verbose_name='وضعیت دراپ')
     supervisor_status = models.CharField(max_length=100,choices=SuperVisorStatus,default=SuperVisorStatus.pending,verbose_name='وضعیت تایید ناظر')
@@ -227,6 +243,12 @@ class ServiceRequests(models.Model):
         if self.tracking_code:
             if not len(str(self.tracking_code)) == 6:
                 raise ValidationError('کد پیگیری حتما باید 6 رقمی باشد .')
+        if self.submission_status == "registered":
+            if not self.virtual_number or not self.port_number :
+                raise ValidationError("لطفا شماره مجازی و شماره پورت را وارد نمایید")
+        if self.virtual_number:
+            if not (self.virtual_number).isdigit():
+                raise ValidationError('شماره مجازی حتما باید عددی باشد')
 
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}"

@@ -11,7 +11,7 @@ from .models import User ,ServiceRequests , ActiveLocations , ActiveModems , Act
 from myapp.templatetags.custom_filters import to_jalali_persian
 from django.contrib.auth.models import Permission
 from django.utils.safestring import mark_safe
-
+from django.core.exceptions import ValidationError
 
 class DisplayOnlyWidget(forms.Widget):
     def __init__(self, text, color="black", *args, **kwargs):
@@ -68,7 +68,10 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
         ]
         active_roles = sum(1 for r in roles if r)
 
-        if user.is_superuser or active_roles > 1:
+        if user.is_superuser:
+            return('full_name','ispan','mobile_number')
+
+        if active_roles > 1:
             return ('full_name','location','mobile_number')
         else:
             return('full_name','ispan','mobile_number')
@@ -150,6 +153,12 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
     def ispan(self,obj):
         user = getattr(self, '_current_user', None)
         if user:
+            if user.is_superuser:
+                if obj.finalization_status == "pending":
+                    return format_html('<span style="color: orange;">● سرویس درجریان نصب است</span>')
+                elif obj.finalization_status == "ended":
+                    return format_html('<span style="color: green;">● تحویل و اتمام سرویس</span>')
+
             
             if user.role_marketer:
                 if obj.marketer_status == "accepted":
@@ -195,7 +204,6 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
                     return format_html('<span style="color: orange;">● در صف فیوژن زنی</span>')
     ispan.short_description = 'وضعیت' # type: ignore
 
-    
     def get_queryset(self, request):
         self._current_user = request.user
         from django.db.models import Q
@@ -233,14 +241,21 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
                 Q(finalization_status=ServiceRequests.FinalizationStatus.pending)
             )
 
+        if user.role_operator:
+            combined_q |= (
+                Q(fusion_status=ServiceRequests.FusionStatus.accepted) &
+                ~Q(finalization_status=ServiceRequests.FinalizationStatus.ended)
+            )      
+
         return qs.filter(combined_q).distinct()
 
     def has_add_permission(self, request, obj=None):
-        return (True if request.user.is_superuser or request.user.role_marketer else False)
+        return request.user.is_superuser
 
     def has_delete_permission(self, request, obj=None):
-        # return False
         return (True if request.user.is_superuser or request.user.role_marketer else False)
+
+    def has_view_history_permission(self,request,obj=None): return request.user.is_superuser
 
     def formfield_for_choice_field(self, db_field, request, **kwargs):
         formfield = super().formfield_for_choice_field(db_field, request, **kwargs)
@@ -284,6 +299,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
             if old_obj.supervisor_status != 'rejected' and form.cleaned_data.get('supervisor_status','') == 'rejected':
                 obj.drop_status = 'repending'
 
+
             obj.save()
         super().save_model(request, obj, form, change)
 
@@ -293,7 +309,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
         MASTER_FIELDSETS_STRUCTURE = (
             ('وضعیت نصب', {
                 'fields': ('marketer_status', 'drop_status', 'supervisor_status',
-                           'fusion_status', 'submission_status','pay_status','finalization_status'),
+                           'fusion_status', 'submission_status','virtual_number','port_number','pay_status','finalization_status'),
                 'classes': ('collapse',)
             }),
             ('اطلاعات دراپ', {
@@ -334,7 +350,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
         # --- ۲. تعریف دسترسی‌های هر نقش ---
         ROLE_FIELDS = {
             'role_marketer': {
-                'وضعیت نصب': ['marketer_status', 'submission_status','pay_status','finalization_status'],
+                'وضعیت نصب': ['marketer_status','pay_status'],
                 'اطلاعات دراپ': ['outdoor_area', 'internal_area', 'fat_index', 'odc_index', 'pole_count', 'headpole_count', 'hook_count'],
                 'باکس دانلود': ['documents_box', 'download_form', 'documents','marketer'],
                 'اطلاعات شخصی': ['first_name', 'last_name', 'father_name', 'national_code', 'originated_from', 'bc_number', 'birthday', 'landline_number', 'mobile_number', 'address', 'location', 'post_code', 'house_is_owner'],
@@ -354,11 +370,17 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
                 'سایر اطلاعات': ['contact_user', 'tracking_code', 'jalali_request_time'],
             },
             'role_fusionagent': {
-                'وضعیت نصب': ['fusion_status', 'finalization_status'],
+                'وضعیت نصب': ['fusion_status','pay_status', 'finalization_status'],
                 'اطلاعات دراپ': ['outdoor_area', 'internal_area', 'fat_index', 'odc_index', 'pole_count', 'headpole_count', 'hook_count'],
                 'اطلاعات شخصی': ['first_name', 'last_name', 'landline_number', 'mobile_number', 'address', 'location', 'post_code'],
                 'سایر اطلاعات': ['contact_user', 'tracking_code', 'jalali_request_time'],
-            }
+            },
+            'role_operator': {
+                'وضعیت نصب': ['submission_status', 'virtual_number','port_number'],
+                'اطلاعات دراپ': ['outdoor_area', 'internal_area', 'fat_index', 'odc_index', 'pole_count', 'headpole_count', 'hook_count'],
+                'اطلاعات شخصی': ['first_name', 'last_name', 'father_name', 'national_code', 'originated_from', 'bc_number', 'birthday', 'landline_number', 'mobile_number', 'address', 'location', 'post_code', 'house_is_owner'],
+                'سایر اطلاعات': ['contact_user', 'tracking_code', 'jalali_request_time'],
+            },
         }
         
         # --- ۳. ساخت مجموعه (Set) کل فیلدهای مجاز برای کاربر ---
@@ -379,6 +401,10 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
 
         if getattr(request.user, "role_fusionagent", False):
             for section, fields in ROLE_FIELDS['role_fusionagent'].items():
+                all_allowed_fields.update(fields)
+
+        if getattr(request.user, "role_operator", False):
+            for section, fields in ROLE_FIELDS['role_operator'].items():
                 all_allowed_fields.update(fields)
 
         # --- ۴. ساخت fieldsets نهایی با حفظ ترتیب ---
@@ -425,8 +451,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
         WRITABLE_FIELDS_BY_ROLE = {
             'role_marketer': {
                 'marketer_status',
-                'submission_status',
-                'finalization_status',
+                'pay_status',
                 'documents',
                 'first_name',
                 'last_name', 
@@ -445,8 +470,6 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
                 'modem',
                 'plan',
                 'finished_request',
-                'tracking_code'
-
             },
             'role_dropagent': {
                 'drop_status',
@@ -463,7 +486,13 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
             },
             'role_fusionagent': {
                 'fusion_status',
+                'pay_status',
                 'finalization_status',
+            },
+            'role_operator': {
+                'submission_status',
+                'virtual_number',
+                'port_number',
             }
         }
         
@@ -489,6 +518,9 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
         if getattr(request.user, "role_fusionagent", False):
             user_writable_fields.update(WRITABLE_FIELDS_BY_ROLE.get('role_fusionagent', set()))
 
+        if getattr(request.user, "role_operator", False):
+            user_writable_fields.update(WRITABLE_FIELDS_BY_ROLE.get('role_operator', set()))
+
         # ۳. محاسبه فیلدهای Readonly
         # (تمام فیلدهای قابل مشاهده) - (فیلدهای قابل ویرایش)
         role_based_readonly_fields = all_visible_fields - user_writable_fields
@@ -499,7 +531,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
         
         return list(final_readonly_fields)
 
-    def get_form(self, request, obj=None, **kwargs):
+    def get_form(self, request, obj=None, **kwargs): 
 
         form = super().get_form(request, obj, **kwargs)
         if obj:
@@ -554,13 +586,13 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
                         form.base_fields['fusion_status'].disabled = True
                         form.base_fields['fusion_status'].widget = DisplayOnlyWidget(
                         "امکان فیوژن زنی وجود ندارد دراپ هنوز توسط ناظر تایید نشده است", color="aqua")
-                    if obj.finalization_status == "ended":
+                    if obj.submission_status == "registered":
                         form.base_fields['fusion_status'].disabled = True
                         form.base_fields['fusion_status'].widget = DisplayOnlyWidget(
-                        "امکان تغییر وجود ندارد ، سرویس ثبت نهایی شده است", color="yellow")
+                        "امکان تغییر وجود ندارد ، فرم ثبت شده است", color="yellow")
 
                 # رد انلی شدن فانالیزیشن
-                if request.user.role_marketer or request.user.role_fusionagent or request.user.is_superuser :
+                if  request.user.role_fusionagent or request.user.is_superuser :
                     if obj.fusion_status != "accepted" and  obj.submission_status != "registered":
                         form.base_fields['finalization_status'].disabled = True
                         form.base_fields['finalization_status'].widget = DisplayOnlyWidget(
@@ -575,13 +607,27 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
                         "امکان ثبت نهایی وجود ندارد فرم ثبت نام هنوز ثبت نشده است", color="aqua")
 
                 #رد انلی شدن ثبت فرم
-                if request.user.role_marketer or request.user.role_fusionagent or request.user.is_superuser :
-                    if obj.finalization_status == "ended":
+                if request.user.role_operator or request.user.is_superuser :
+                    if obj.fusion_status != "accepted":
                         form.base_fields['submission_status'].disabled = True
                         form.base_fields['submission_status'].widget = DisplayOnlyWidget(
-                        "امکان تغییر ثبت وجود ندارد ، سرویس ثبت نهایی شده است", color="yellow")
-            except:
-                pass
+                        "امکان ثبت فرم وجود ندارد ، فیوژن زنی هنوز انجام نشده است", color="aqua")
+                    elif obj.finalization_status == "ended":
+
+                        form.base_fields['virtual_number'].disabled = True
+                        form.base_fields['virtual_number'].widget = DisplayOnlyWidget(
+                            obj.virtual_number,color="yellow"
+                        )
+                        form.base_fields['port_number'].disabled = True
+                        form.base_fields['port_number'].widget = DisplayOnlyWidget(
+                            obj.port_number,color="yellow"
+                        )
+
+                        form.base_fields['submission_status'].disabled = True
+                        form.base_fields['submission_status'].widget = DisplayOnlyWidget(
+                        "امکان تغییر وضعیت وجود ندارد ، سرویس ثبت نهایی شده است", color="yellow")
+            except Exception as e:
+                print(e)
      
         return form
     
@@ -687,7 +733,7 @@ class UserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
         ('اطلاعات شخصی', {'fields': ('first_name', 'last_name', 'email')}),
-        ('نقش ها',{'fields':('role_supervisor','role_marketer','role_dropagent','role_fusionagent')}),
+        ('نقش ها',{'fields':('role_supervisor','role_marketer','role_dropagent','role_fusionagent','role_operator')}),
         # ('دسترسی ها', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('دسترسی ها', {'fields': ('is_active', 'is_staff', 'is_superuser', 'user_permissions')}), # گروه ها حذف شد 
         ('تاریخ های مهم', {'fields': ('jalali_last_login', 'jalali_date_joined')}),

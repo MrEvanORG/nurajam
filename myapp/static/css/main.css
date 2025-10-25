@@ -3357,8 +3357,8 @@
 		-webkit-backdrop-filter: blur(11.1px);
 		border: 1px solid rgba(255, 255, 255, 0.32);
 
-		padding: 30px 10px;
-		border-radius: 6px;
+		padding: 20px 20px;
+		border-radius: 26px !important;
 		box-shadow: var(--box-shadow);
 	}
 
