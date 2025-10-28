@@ -1,17 +1,21 @@
+import openpyxl
 from typing import Any
 from django import forms
 from django.urls import reverse
 from django.contrib import admin
 from django.utils.html import format_html
-from django.http import HttpRequest, HttpResponseRedirect , HttpResponse
+from openpyxl.styles import Font, Alignment
+from openpyxl.utils import get_column_letter
+from django.utils.safestring import mark_safe
 from django.contrib.auth import get_user_model 
+from django.contrib.auth.models import Permission 
 from django.contrib.auth.forms import UserChangeForm
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.http import HttpRequest, HttpResponseRedirect , HttpResponse
+from myapp.templatetags.custom_filters import to_jalali_persian , to_jalali
 from .models import User ,ServiceRequests , ActiveLocations , ActiveModems , ActivePlans , OtherInfo
-from myapp.templatetags.custom_filters import to_jalali_persian
-from django.contrib.auth.models import Permission
-from django.utils.safestring import mark_safe
-from django.core.exceptions import ValidationError
+from openpyxl.worksheet.dimensions import ColumnDimension, DimensionHolder
+
 
 class DisplayOnlyWidget(forms.Widget):
     def __init__(self, text, color="black", *args, **kwargs):
@@ -26,7 +30,7 @@ class DisplayOnlyWidget(forms.Widget):
 class NoorajamAdminSite(admin.AdminSite):
     site_header = 'پنل ادمین سایت نوراجم'
     site_title = 'پنل مدیریت'
-    index_title = 'به پنل مدیریت شرکت توسعه و زیرساخت نوراجم خوش آمدید'
+    index_title = 'به پنل مدیریت شرکت توسعه زیرساخت نوراجم خوش آمدید'
 
     def get_app_list(self, request):
         app_list = super().get_app_list(request)
@@ -155,53 +159,52 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
         if user:
             if user.is_superuser:
                 if obj.finalization_status == "pending":
-                    return format_html('<span style="color: orange;">● سرویس درجریان نصب است</span>')
+                    return format_html('<span style="color: darkgoldenrod;">● سرویس درجریان نصب است</span>')
                 elif obj.finalization_status == "ended":
-                    return format_html('<span style="color: green;">● تحویل و اتمام سرویس</span>')
+                    return format_html('<span style="color:limegreen;">● تحویل و اتمام سرویس</span>')
 
-            
             if user.role_marketer:
                 if obj.marketer_status == "accepted":
-                    return format_html('<span style="color: green;">● اطلاعات تایید شده</span>')
+                    return format_html('<span style="color: limegreen;">● اطلاعات تایید شده</span>')
                 elif obj.marketer_status == "rejected":
                     return format_html('<span style="color:red;">● اطلاعات رد شده</span>')
                 elif obj.marketer_status == "pending":
-                    return format_html('<span style="color:orange;">● در انتظار تایید اطلاعات</span>')
+                    return format_html('<span style="color:darkgoldenrod;">● در انتظار تایید اطلاعات</span>')
                 
             if user.role_dropagent:
                 if obj.drop_status == "accepted" :
-                    return format_html('<span style="color: green;">● دراپ کشی انجام شد</span>')
+                    return format_html('<span style="color: limegreen;">● دراپ کشی انجام شد</span>')
                 elif obj.drop_status == "rejected":
                     return format_html('<span style="color:red;">● عدم امکان اجرای دراپ</span>')
                 elif obj.drop_status == "pending":
-                    return format_html('<span style="color:orange;">● در انتظار دراپ کشی</span>')
+                    return format_html('<span style="color:darkgoldenrod;">● در انتظار دراپ کشی</span>')
                 elif obj.drop_status == "queued":
-                    return format_html('<span style="color:orange;">● در صف دراپ کشی</span>')
+                    return format_html('<span style="color:darkgoldenrod;">● در صف دراپ کشی</span>')
                 elif obj.drop_status == "repending":
-                    return format_html('<span style="color:orange;">● دراپ توسط ناظر رد شد ، در انتظار بازبینی مجدد شما</span>')
+                    return format_html('<span style="color:darkgoldenrod;">● دراپ توسط ناظر رد شد ، در انتظار بازبینی مجدد شما</span>')
                 
             if user.role_supervisor:
                 if obj.supervisor_status == "accepted":
-                    return format_html('<span style="color: green;">● دراپ تایید شد</span>')
+                    return format_html('<span style="color:limegreen;">● دراپ تایید شد</span>')
                 elif obj.supervisor_status == "rejected":
                     return format_html('<span style="color: red ;">● دراپ رد شد</span>')
                 elif obj.supervisor_status == "pending":
-                    return format_html('<span style="color: orange ;">● در انتظار بررسی ناظر</span>')
+                    return format_html('<span style="color: darkgoldenrod ;">● در انتظار بررسی ناظر</span>')
                 
             if user.role_operator:
                 if obj.submission_status == "registered":
-                    return format_html('<span style="color: green;">● فرم ثبت شده</span>')
+                    return format_html('<span style="color:limegreen;">● فرم ثبت شده</span>')
                 elif obj.submission_status == "pending":
-                    return format_html('<span style="color: orange;">● در انتظار ثبت فرم</span>')
+                    return format_html('<span style="color: darkgoldenrod;">● در انتظار ثبت فرم</span>')
 
             
             if user.role_fusionagent:
                 if obj.fusion_status == "accepted":
-                    return format_html('<span style="color: green;">● فیوژن زنی انجام شد</span>')
+                    return format_html('<span style="color: limegreen;">● فیوژن زنی انجام شد</span>')
                 elif obj.fusion_status == "pending":
-                    return format_html('<span style="color: orange;">● در انتظار فیوژن زنی</span>')
+                    return format_html('<span style="color: darkgoldenrod;">● در انتظار فیوژن زنی</span>')
                 elif obj.fusion_status == "queued":
-                    return format_html('<span style="color: orange;">● در صف فیوژن زنی</span>')
+                    return format_html('<span style="color: darkgoldenrod;">● در صف فیوژن زنی</span>')
     ispan.short_description = 'وضعیت' # type: ignore
 
     def get_queryset(self, request):
@@ -544,88 +547,88 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
 
                         form.base_fields['marketer_status'].disabled = True
                         form.base_fields['marketer_status'].widget = DisplayOnlyWidget(
-                        "امکان تغییر این بخش وجود ندارد ، مدارک تایید و دراپ کشی انجام شده است", color="yellow")
+                        "امکان تغییر این بخش وجود ندارد ، مدارک تایید و دراپ کشی انجام شده است", color="#B6771D")
                 
                     if obj.drop_status == "queued" :
             
                         form.base_fields['marketer_status'].disabled = True
                         form.base_fields['marketer_status'].widget = DisplayOnlyWidget(
-                        "امکان تغییر این بخش وجود ندارد ، سرویس در صف دراپ کشی قرار گرفته است", color="yellow")
+                        "امکان تغییر این بخش وجود ندارد ، سرویس در صف دراپ کشی قرار گرفته است", color="#B6771D")
         
                 #رد انلی شدن دراپ 
                 if request.user.role_dropagent or request.user.is_superuser:
                     if obj.marketer_status != "accepted":
                         form.base_fields['drop_status'].disabled = True
                         form.base_fields['drop_status'].widget = DisplayOnlyWidget(
-                        "در انتظار تایید مدارک و اطلاعات توسط بازاریاب", color="aqua"
+                        "در انتظار تایید مدارک و اطلاعات توسط بازاریاب", color="crimson"
                             )
                     if obj.supervisor_status == "accepted":
                         form.base_fields['drop_status'].disabled = True
                         form.base_fields['drop_status'].widget = DisplayOnlyWidget(
-                        "دراپ توسط ناظر تایید شده امکان تغییر وضعیت وجود ندارد", color="yellow"
+                        "دراپ توسط ناظر تایید شده امکان تغییر وضعیت وجود ندارد", color="#B6771D"
                             )
                 #رد انلی شدن ناظر
                 if request.user.role_supervisor or request.user.is_superuser:
                     if obj.drop_status != "accepted" :
                         form.base_fields['supervisor_status'].disabled = True
                         form.base_fields['supervisor_status'].widget = DisplayOnlyWidget(
-                        "امکان بازبینی وجود ندارد ، دراپ کشی هنوز انجام نشده است", color="aqua")                     
+                        "امکان بازبینی وجود ندارد ، دراپ کشی هنوز انجام نشده است", color="crimson")                     
                     if obj.fusion_status == "queued" :
                         form.base_fields['supervisor_status'].disabled = True
                         form.base_fields['supervisor_status'].widget = DisplayOnlyWidget(
-                        "امکان تغییر وجود ندارد ، سرویس در صف فیوژن زنی قرار گرفته است", color="yellow")
+                        "امکان تغییر وجود ندارد ، سرویس در صف فیوژن زنی قرار گرفته است", color="#B6771D")
                                         
                     elif obj.fusion_status == "accepted":
                         form.base_fields['supervisor_status'].disabled = True
                         form.base_fields['supervisor_status'].widget = DisplayOnlyWidget(
-                        "امکان تغییر وجود ندارد ، فیوژن زنی سرویس انجام شده است", color="yellow")      
+                        "امکان تغییر وجود ندارد ، فیوژن زنی سرویس انجام شده است", color="#B6771D")      
                         
                 #رد انلی شدن فیوژن
                 if request.user.role_fusionagent or request.user.is_superuser:
                     if obj.supervisor_status != "accepted":
                         form.base_fields['fusion_status'].disabled = True
                         form.base_fields['fusion_status'].widget = DisplayOnlyWidget(
-                        "امکان فیوژن زنی وجود ندارد دراپ هنوز توسط ناظر تایید نشده است", color="aqua")
+                        "امکان فیوژن زنی وجود ندارد دراپ هنوز توسط ناظر تایید نشده است", color="crimson")
                     if obj.submission_status == "registered":
                         form.base_fields['fusion_status'].disabled = True
                         form.base_fields['fusion_status'].widget = DisplayOnlyWidget(
-                        "امکان تغییر وجود ندارد ، فرم ثبت شده است", color="yellow")
+                        "امکان تغییر وجود ندارد ، فرم ثبت شده است", color="#B6771D")
 
                 # رد انلی شدن فانالیزیشن
                 if  request.user.role_fusionagent or request.user.is_superuser :
                     if obj.fusion_status != "accepted" and  obj.submission_status != "registered":
                         form.base_fields['finalization_status'].disabled = True
                         form.base_fields['finalization_status'].widget = DisplayOnlyWidget(
-                        "امکان ثبت نهایی وجود ندارد وضعیت فیوژن و ثبت فرم ناتمام است", color="aqua")
+                        "امکان ثبت نهایی وجود ندارد وضعیت فیوژن و ثبت فرم ناتمام است", color="crimson")
                     elif obj.fusion_status != "accepted" and obj.submission_status == "registered":
                         form.base_fields['finalization_status'].disabled = True
                         form.base_fields['finalization_status'].widget = DisplayOnlyWidget(
-                        "امکان ثبت نهایی وجود ندارد وضعیت فیوژن ناتمام است", color="aqua")
+                        "امکان ثبت نهایی وجود ندارد وضعیت فیوژن ناتمام است", color="crimson")
                     elif obj.fusion_status == "accepted" and obj.submission_status != "registered":
                         form.base_fields['finalization_status'].disabled = True
                         form.base_fields['finalization_status'].widget = DisplayOnlyWidget(
-                        "امکان ثبت نهایی وجود ندارد فرم ثبت نام هنوز ثبت نشده است", color="aqua")
+                        "امکان ثبت نهایی وجود ندارد فرم ثبت نام هنوز ثبت نشده است", color="crimson")
 
                 #رد انلی شدن ثبت فرم
                 if request.user.role_operator or request.user.is_superuser :
                     if obj.fusion_status != "accepted":
                         form.base_fields['submission_status'].disabled = True
                         form.base_fields['submission_status'].widget = DisplayOnlyWidget(
-                        "امکان ثبت فرم وجود ندارد ، فیوژن زنی هنوز انجام نشده است", color="aqua")
+                        "امکان ثبت فرم وجود ندارد ، فیوژن زنی هنوز انجام نشده است", color="crimson")
                     elif obj.finalization_status == "ended":
 
                         form.base_fields['virtual_number'].disabled = True
                         form.base_fields['virtual_number'].widget = DisplayOnlyWidget(
-                            obj.virtual_number,color="yellow"
+                            obj.virtual_number,color="#B6771D"
                         )
                         form.base_fields['port_number'].disabled = True
                         form.base_fields['port_number'].widget = DisplayOnlyWidget(
-                            obj.port_number,color="yellow"
+                            obj.port_number,color="#B6771D"
                         )
 
                         form.base_fields['submission_status'].disabled = True
                         form.base_fields['submission_status'].widget = DisplayOnlyWidget(
-                        "امکان تغییر وضعیت وجود ندارد ، سرویس ثبت نهایی شده است", color="yellow")
+                        "امکان تغییر وضعیت وجود ندارد ، سرویس ثبت نهایی شده است", color="#B6771D")
             except Exception as e:
                 print(e)
      
@@ -635,15 +638,102 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
 
     @admin.action(description='خروجی اکسل برای کاربران انتخاب شده')
     def export_excel_information(self, request, queryset):
-        if not request.user.is_superuser:
+        if (request.user.is_superuser != True and request.user.role_marketer != True) :
             self.message_user(request, "شما دسترسی لازم برای انجام این کار را ندارید.", level='error')
             return
-        
-        selected_ids = list(queryset.values_list('id', flat=True))
-        request.session['selected_user_ids_for_excel'] = selected_ids
+        wb = openpyxl.Workbook()
+        ws = wb.active
 
-        # return HttpResponseRedirect(reverse('get_excel_export'))
-        return HttpResponse("به زودی ...")
+        ws.sheet_view.rightToLeft = True
+
+        # --- مرحله ۲: نوشتن تایتل اصلی (ردیف ۱) ---
+        title = "لیست بازاریابی گروه توسعه زیر ساخت نوراجم"
+        # تعریف هدرها برای پیدا کردن تعداد ستون‌ها
+        headers = [
+            "ردیف", "نام و نام خانوادگی", "کد پستی", "کد ملی", "شماره تماس",
+            "آدرس پستی", "مشخصه FAT", "تعداد تیر", "وضعیت پرداخت",
+            "وضعیت دراپ", "وضعیت فیوژن", "وضعیت ثبت نام", "متراژ خارجی",
+            "متراژ داخلی", "نام بازاریاب", "تاریخ درخواست"
+        ]
+        num_columns = len(headers)
+        
+        # ادغام سلول‌های ردیف اول برای تایتل
+        ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=num_columns)
+        title_cell = ws.cell(row=1, column=1)
+        title_cell.value = title
+        title_cell.font = Font(bold=True, size=14)
+        title_cell.alignment = Alignment(horizontal='center', vertical='center')
+
+        # --- مرحله ۳: نوشتن هدر ستون‌ها (ردیف ۲) ---
+        ws.append(headers)
+        # استایل‌دهی به ردیف هدر
+        for col_num in range(1, num_columns + 1):
+            cell = ws.cell(row=2, column=col_num)
+            cell.font = Font(bold=True)
+            cell.alignment = Alignment(horizontal='right', vertical='center')
+
+        # --- مرحله ۴: نوشتن داده‌ها (از ردیف ۳ به بعد) ---
+        row_counter = 1
+        for obj in queryset:
+            # مدیریت زمان (برای نمایش خوانا و محلی)
+            request_time_str = ""
+            if obj.request_time:
+                request_time_str = to_jalali(obj.request_time)
+
+            # ساخت ردیف داده‌ها با مدیریت مقادیر Null (تبدیل به رشته خالی)
+            data_row = [
+                f"{row_counter:02d}",  # ردیف با فرمت 01, 02
+                obj.get_full_name(),
+                obj.post_code or "",
+                obj.national_code or "",
+                obj.mobile_number or "",
+                obj.address or "",
+                obj.fat_index or "",
+                obj.pole_count or "",
+                obj.get_pay_status_display(),
+                obj.get_drop_status_display(),
+                obj.get_fusion_status_display(),
+                obj.get_marketer_status_display(),
+                obj.outdoor_area or "",
+                obj.internal_area or "",
+                obj.marketer or "",
+                request_time_str,
+            ]
+            
+            ws.append(data_row)
+            
+            # استایل‌دهی به سلول‌های داده (اختیاری، برای خوانایی)
+            for col_num in range(1, num_columns + 1):
+                ws.cell(row=row_counter + 2, column=col_num).alignment = Alignment(horizontal='right', vertical='center')
+                
+            row_counter += 1
+
+        # --- مرحله ۵: تنظیم عرض ستون‌ها (اختیاری اما بسیار مفید) ---
+        dim_holder = DimensionHolder(worksheet=ws)
+        for col in range(1, num_columns + 1):
+            # یک عرض پیش‌فرض تعیین می‌کنیم
+            width = 20
+            if col == 1: # ردیف
+                width = 5
+            elif col == 6: # آدرس پستی
+                width = 40
+            elif col == 2: # نام
+                width = 25
+                
+            dim_holder[get_column_letter(col)] = ColumnDimension(ws, min=col, max=col, width=width)
+        
+        ws.column_dimensions = dim_holder
+
+        # --- مرحله ۶: ایجاد و بازگرداندن پاسخ HTTP ---
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        response['Content-Disposition'] = 'attachment; filename="marketing_export.xlsx"'
+        
+        # ذخیره ورک‌بوک در پاسخ
+        wb.save(response)
+        
+        return response
         
 @admin.register(ActiveLocations,site=super_admin_site)
 class ActiveLocationsAdmin(admin.ModelAdmin):
@@ -783,7 +873,7 @@ class UserAdmin(BaseUserAdmin):
     full_name.short_description = "نام"
 
     def role(self,obj):
-        return format_html(f'<span style="color:cyan;">{obj.get_role()}</span>')
+        return format_html(f'<span style="color:var(--link-fg);">{obj.get_role()}</span>')
     role.short_description = "نقش"
         
     actions = ['send_custom_sms']

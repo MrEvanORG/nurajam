@@ -1,0 +1,16 @@
+:root {
+    --primary: #0057B8;
+    --secondary: #E6EDF3;
+    --text-color: #222;
+    --bg-color: #ffffff;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+.module h2, .app-auth {
+    background: var(--primary);
+    color: #fff;
+}
