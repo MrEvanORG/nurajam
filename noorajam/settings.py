@@ -35,6 +35,7 @@ AUTH_USER_MODEL = 'myapp.User'
 # Application definition
 
 INSTALLED_APPS = [
+    'jalali_date',
     'django.contrib.auth',
     'django.contrib.staticfiles',
     'django.contrib.sites',
@@ -44,7 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'admin_reorder'
+    'admin_reorder',
 ]
 
 ADMIN_REORDER = (
@@ -202,7 +203,7 @@ LANGUAGE_CODE = 'fa-ir'
 TIME_ZONE = 'Asia/Tehran'
 
 USE_I18N = True
-
+USE_L10N = True
 USE_TZ = True
 
 SITE_ID = 1

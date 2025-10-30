@@ -18,4 +18,7 @@ urlpatterns = [
 
     path('send-sms-to-user', views.send_sms_page_view_user, name='send_user_message'),
     path('create_form/<str:kind>/<int:pk>/', addons.create_form, name='create-form'),
+    path('download-document/<int:pk>/',addons.download_document_view,name='download-document'),
 ]
+
+

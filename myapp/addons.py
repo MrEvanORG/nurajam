@@ -5,15 +5,14 @@ import platform
 import threading
 from .import views
 import ghasedak_sms
-from django.urls import reverse
-
 from docxtpl import DocxTemplate
 from .models import ServiceRequests
 from django.http import JsonResponse
-from django.http import HttpResponse , FileResponse
+from django.http import HttpResponse , FileResponse , Http404
 from myapp.templatetags.custom_filters import to_jalali
-from django.shortcuts import render ,get_object_or_404 , redirect
+from django.shortcuts import get_object_or_404 , redirect
 from django.views.decorators.http import require_POST
+from django.contrib.admin.views.decorators import staff_member_required
 sms_api = ghasedak_sms.Ghasedak(api_key='e43935da3357ec792ac9bad1226b9ac6ae71ae59dbd6c0f3292dc1ddf909b94ayXcdVcWrLHmZmpfb')
 
 
@@ -87,7 +86,7 @@ def create_form(request,kind,pk):
         'ability':'◼' if not obj.fusion_status == "rejected" else '◻',
         'disability':'◼' if obj.fusion_status == "rejected"  else '◻',
         "fat":obj.fat_index,
-        "marketer":'' if not obj.marketer else obj.marketer,
+        "marketer":'' if not obj.marketer_name else obj.marketer_name.get_full_name(),
         "date":to_jalali(obj.request_time),
     }
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -117,15 +116,7 @@ def create_form(request,kind,pk):
             except Exception as e:
                 return HttpResponse(e)
         elif system == 'Linux':
-            try:
-                import subprocess 
-                if os.path.isfile(FPDF_PATH):
-                    os.remove(FPDF_PATH)
-                command = ["libreoffice","--headless","--convert-to","pdf",FTEMPLATE_PATH,"--outdir",FPDF_DIRECTORY]
-                subprocess.run(command,check=True)
-                return FileResponse(open(FPDF_PATH,'rb'),as_attachment=True,filename=f'{obj.get_full_name()}.pdf')
-            except Exception as e:
-                return HttpResponse(e)
+            return HttpResponse("Unsopported in Linux platforms .... ")
 
 def otp_generate():
     return str(random.randint(100000, 999999))
@@ -230,9 +221,43 @@ def register_sendotp(request):
     return response
 
 def get_ip(request):
+
     forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if forwarded_for:
         ip = forwarded_for.split(',')[0]
     else:
         ip = request.META.get('REMOTE_ADDR')
     return ip
+
+@staff_member_required # بسیار مهم: این ویو را فقط برای ادمین/کارکنان محدود می‌کند
+def download_document_view(request, pk):
+    """
+    این ویو یک فایل را برای دانلود بر اساس PK آبجکت ارائه می‌دهد.
+    """
+    # ۱. آبجکت را با اطمینان پیدا کن
+    obj = get_object_or_404(ServiceRequests, pk=pk)
+    
+    # ۲. بررسی کن که آبجکت فایل دارد یا نه
+    if not obj.documents:
+        raise Http404("فایلی برای این آبجکت یافت نشد.")
+        
+    # ۳. نام فایل دانلودی را بساز
+    # پسوند را از نام فایل ذخیره شده (که UUID است) بردار
+    file_path_in_db = obj.documents.name
+    filename, ext = os.path.splitext(file_path_in_db)
+    
+    # نام کامل کاربر را بگیر
+    user_full_name = obj.get_full_name()
+    download_name = f"{user_full_name.replace(' ', '_')}{ext}"
+
+    # ۴. فایل را با استفاده از FileResponse برگردان
+    # ما از .open() خود فیلد استفاده می‌کنیم تا با storage های مختلف (مثل S3) هم سازگار باشد
+    try:
+        response = FileResponse(
+            obj.documents.open('rb'), 
+            as_attachment=True, 
+            filename=download_name
+        )
+        return response
+    except FileNotFoundError:
+        raise Http404("فایل در سرور یافت نشد.")

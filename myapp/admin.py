@@ -1,5 +1,6 @@
-import openpyxl
 from typing import Any
+from django.db.models.fields.related import ForeignKey
+import openpyxl
 from django import forms
 from django.urls import reverse
 from django.contrib import admin
@@ -11,11 +12,12 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission 
 from django.contrib.auth.forms import UserChangeForm
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.http import HttpRequest, HttpResponseRedirect , HttpResponse
+from django.http import  HttpRequest, HttpResponseRedirect , HttpResponse
 from myapp.templatetags.custom_filters import to_jalali_persian , to_jalali
-from .models import User ,ServiceRequests , ActiveLocations , ActiveModems , ActivePlans , OtherInfo
+from .models import User ,ServiceRequests , ActiveLocations , ActiveModems , ActivePlans , OtherInfo , AccountNumber
 from openpyxl.worksheet.dimensions import ColumnDimension, DimensionHolder
-
+from jalali_date.fields import JalaliDateField
+from jalali_date.admin import AdminJalaliDateWidget
 
 class DisplayOnlyWidget(forms.Widget):
     def __init__(self, text, color="black", *args, **kwargs):
@@ -145,10 +147,20 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
                            <a class="button" href="{pdf_url}">Pdf دانلود</a>""")
     download_form.short_description = "دانلود فرم ثبت نام" # type: ignore
 
-    def documents_box(self,obj):
-        url = obj.documents.url
-        return format_html(f"""<a class="button" href="{url}" target=_blank download>دانلود</a> - <a class="button" href="{url}">مشاهده</a>""")
-    documents_box.short_description = "بخش مدارک" # type: ignore
+    def documents_box(self, obj):
+        if not obj.documents:
+            return "فایلی آپلود نشده است."
+            
+        view_url = obj.documents.url
+          
+        download_url = reverse('download-document', args=[obj.pk])
+        
+        return format_html(
+            f"""<a class="button" href="{download_url}">دانلود</a> 
+                 - 
+                <a class="button" href="{view_url}" target="_blank">مشاهده</a>"""
+        )
+    documents_box.short_description = "بخش مدارک"
 
     def full_name(self,obj):
         return obj.get_full_name()
@@ -233,8 +245,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
         # شرط ناظر (سوپروایزر):
         if user.role_supervisor:
             combined_q |= (
-                ( Q(drop_status=ServiceRequests.DropStatus.accepted) | Q(drop_status=ServiceRequests.DropStatus.repending) ) & 
-                ~Q(fusion_status=ServiceRequests.FusionStatus.accepted)
+                ( Q(drop_status=ServiceRequests.DropStatus.accepted) | Q(drop_status=ServiceRequests.DropStatus.repending) ) & ( Q(fusion_status=ServiceRequests.FusionStatus.pending) )
             )
 
         # شرط فیوژن زن:
@@ -283,13 +294,20 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
 
         return formfield
 
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        if db_field.name == 'payment_date':
+            kwargs['form_class'] = JalaliDateField
+            kwargs['widget'] = AdminJalaliDateWidget
+        return super().formfield_for_dbfield(db_field, request, **kwargs)
+
+    def formfield_for_foreignkey(self,db_field,request,**kwargs):
+        if db_field.name == "marketer_name":
+            kwargs["queryset"] = User.objects.filter(role_marketer=True)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+    
     def save_model(self, request, obj, form, change):
         if not change:
-            try:
-                obj.marketer = request.user.get_full_name()  # type: ignore
-            except:
-                pass
-            obj.save()
+            pass
 
         elif change:
             old_obj = self.model.objects.get(pk=obj.pk)
@@ -312,7 +330,11 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
         MASTER_FIELDSETS_STRUCTURE = (
             ('وضعیت نصب', {
                 'fields': ('marketer_status', 'drop_status', 'supervisor_status',
-                           'fusion_status', 'submission_status','virtual_number','port_number','pay_status','finalization_status'),
+                           'fusion_status', 'submission_status','virtual_number','port_number','finalization_status'),
+                'classes': ('collapse',)
+            }),
+            ('وضعیت پرداخت', {
+                'fields': ('pay_status', 'account_number', 'tracking_payment','payment_date','payment_time'),
                 'classes': ('collapse',)
             }),
             ('اطلاعات دراپ', {
@@ -322,7 +344,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
                 'classes': ('collapse',)
             }),
             ('باکس دانلود', {
-                'fields': ('documents_box','download_form','documents','marketer'), 
+                'fields': ('documents_box','download_form','documents','marketer_name'), 
                 'classes': ('collapse',)
             }),
             ('اطلاعات شخصی', {
@@ -354,8 +376,9 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
         ROLE_FIELDS = {
             'role_marketer': {
                 'وضعیت نصب': ['marketer_status','pay_status'],
+                'وضعیت پرداخت':['pay_status', 'account_number', 'tracking_payment','payment_date','payment_time'],
                 'اطلاعات دراپ': ['outdoor_area', 'internal_area', 'fat_index', 'odc_index', 'pole_count', 'headpole_count', 'hook_count'],
-                'باکس دانلود': ['documents_box', 'download_form', 'documents','marketer'],
+                'باکس دانلود': ['documents_box', 'download_form', 'documents','marketer_name'],
                 'اطلاعات شخصی': ['first_name', 'last_name', 'father_name', 'national_code', 'originated_from', 'bc_number', 'birthday', 'landline_number', 'mobile_number', 'address', 'location', 'post_code', 'house_is_owner'],
                 'اطلاعات سرویس': ['sip_phone', 'modem', 'plan'],
                 'سایر اطلاعات': ['finished_request', 'contact_user', 'tracking_code', 'log_msg_status', 'jalali_request_time'],
@@ -374,6 +397,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
             },
             'role_fusionagent': {
                 'وضعیت نصب': ['fusion_status','pay_status', 'finalization_status'],
+                'وضعیت پرداخت':['pay_status', 'account_number', 'tracking_payment','payment_date','payment_time'],
                 'اطلاعات دراپ': ['outdoor_area', 'internal_area', 'fat_index', 'odc_index', 'pole_count', 'headpole_count', 'hook_count'],
                 'اطلاعات شخصی': ['first_name', 'last_name', 'landline_number', 'mobile_number', 'address', 'location', 'post_code'],
                 'سایر اطلاعات': ['contact_user', 'tracking_code', 'jalali_request_time'],
@@ -381,6 +405,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
             'role_operator': {
                 'وضعیت نصب': ['submission_status', 'virtual_number','port_number'],
                 'اطلاعات دراپ': ['outdoor_area', 'internal_area', 'fat_index', 'odc_index', 'pole_count', 'headpole_count', 'hook_count'],
+                'باکس دانلود': ['documents_box', 'download_form', 'documents','marketer_name'],
                 'اطلاعات شخصی': ['first_name', 'last_name', 'father_name', 'national_code', 'originated_from', 'bc_number', 'birthday', 'landline_number', 'mobile_number', 'address', 'location', 'post_code', 'house_is_owner'],
                 'سایر اطلاعات': ['contact_user', 'tracking_code', 'jalali_request_time'],
             },
@@ -437,6 +462,8 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
         return tuple(final_fieldsets)
 
     def get_readonly_fields(self, request, obj=None):
+        if obj:
+            request.session['secure_form_download'] = obj.pk
 
         method_fields = {
             "contact_user",
@@ -455,7 +482,12 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
             'role_marketer': {
                 'marketer_status',
                 'pay_status',
+                'account_number',
+                'tracking_payment',
+                'payment_date',
+                'payment_time',
                 'documents',
+                'marketer_name',
                 'first_name',
                 'last_name', 
                 'father_name',
@@ -490,6 +522,10 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
             'role_fusionagent': {
                 'fusion_status',
                 'pay_status',
+                'account_number',
+                'tracking_payment',
+                'payment_date',
+                'payment_time',
                 'finalization_status',
             },
             'role_operator': {
@@ -541,6 +577,11 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
             obj.refresh_from_db()
 
             try:
+                if not request.user.is_superuser:
+                    if obj.marketer_name:
+                        form.base_fields['marketer_name'].disabled = True
+                        form.base_fields['marketer_name'].widget = DisplayOnlyWidget(obj.get_full_name(),color="#B6771D")
+                
             #رد انلی شدن تایید مدارک
                 if request.user.role_marketer or request.user.is_superuser:
                     if obj.drop_status == "accepted":
@@ -569,11 +610,12 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
                             )
                 #رد انلی شدن ناظر
                 if request.user.role_supervisor or request.user.is_superuser:
+
                     if obj.drop_status != "accepted" :
                         form.base_fields['supervisor_status'].disabled = True
                         form.base_fields['supervisor_status'].widget = DisplayOnlyWidget(
                         "امکان بازبینی وجود ندارد ، دراپ کشی هنوز انجام نشده است", color="crimson")                     
-                    if obj.fusion_status == "queued" :
+                    elif obj.fusion_status == "queued" :
                         form.base_fields['supervisor_status'].disabled = True
                         form.base_fields['supervisor_status'].widget = DisplayOnlyWidget(
                         "امکان تغییر وجود ندارد ، سرویس در صف فیوژن زنی قرار گرفته است", color="#B6771D")
@@ -651,7 +693,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
         # تعریف هدرها برای پیدا کردن تعداد ستون‌ها
         headers = [
             "ردیف", "نام و نام خانوادگی", "کد پستی", "کد ملی", "شماره تماس",
-            "آدرس پستی", "مشخصه FAT", "تعداد تیر", "وضعیت پرداخت",
+            "آدرس پستی", "مشخصه FAT", "تعداد تیر","تعداد سرتیر", "وضعیت پرداخت",
             "وضعیت دراپ", "وضعیت فیوژن", "وضعیت ثبت نام", "متراژ خارجی",
             "متراژ داخلی", "نام بازاریاب", "تاریخ درخواست"
         ]
@@ -690,6 +732,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
                 obj.address or "",
                 obj.fat_index or "",
                 obj.pole_count or "",
+                obj.headpole_count or "",
                 obj.get_pay_status_display(),
                 obj.get_drop_status_display(),
                 obj.get_fusion_status_display(),
@@ -783,9 +826,16 @@ class ActivePlansAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return (True if request.user.is_superuser or request.user.role_marketer else False)
 
+class AccountNumberInline(admin.TabularInline):
+    model = AccountNumber
+    extra = 1
+    verbose_name_plural = "شماره های حساب"
+
 @admin.register(OtherInfo,site=super_admin_site)
 class OtherInfoAdmin(admin.ModelAdmin):
     list_display = ("sip_phone_cost","drop_cost","center_name","center_address")
+
+    inlines = [AccountNumberInline]
 
     def has_view_permission(self, request, obj=None):
         return (True if request.user.is_superuser or request.user.role_marketer else False)

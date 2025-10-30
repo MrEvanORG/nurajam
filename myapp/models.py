@@ -1,3 +1,5 @@
+import os
+import uuid
 from PIL import Image
 from django.db import models
 from django.core.exceptions import ValidationError
@@ -88,6 +90,24 @@ class OtherInfo(models.Model):
 
     def __str__(self):
         return "سایر اطلاعات"
+class AccountNumber(models.Model):
+    Other_info = models.ForeignKey(OtherInfo, related_name='account_number', on_delete=models.CASCADE)
+    bank_name = models.CharField(max_length=20,verbose_name='نام بانک')
+    account_number = models.CharField(max_length=15,verbose_name='شماره حساب')
+
+    def clean(self):
+        super().clean()
+        if self.account_number:
+            if not (self.account_number).isdigit():
+                raise ValidationError('شماره حساب باید عددی باشد')
+
+    def __str__(self):
+        return f"{self.bank_name} - {self.account_number}"
+
+    class Meta:
+        verbose_name = "شماره حساب"
+        verbose_name_plural = "شناره های حساب"
+        ordering = ['-id']
 
 class ActiveLocations(models.Model):
     name = models.CharField(max_length=50,verbose_name='نام منطقه')
@@ -131,6 +151,13 @@ class ActivePlans(models.Model):
 
     def __str__(self):
         return f"{self.data}G ماهانه - {self.price} تومان"
+
+def get_safe_upload_path(instance, filename):
+    ext = filename.split('.')[-1].lower()
+    
+    unique_name = f"{uuid.uuid4()}.{ext}"
+    
+    return os.path.join('documents', unique_name)
 
 def validate_dockphoto_size(image):
     max_size = 3000
@@ -189,7 +216,7 @@ class ServiceRequests(models.Model):
     bc_number = models.CharField(max_length=12,verbose_name='شماره شناسنامه') 
     birthday = models.CharField(max_length=50,verbose_name='تاریخ تولد')
     originated_from = models.CharField(max_length=50,verbose_name='صادره از')
-    documents = models.ImageField(upload_to='documents/',validators=[validate_dockphoto_size],verbose_name='بارگذاری / تغییر مدارک')
+    documents = models.ImageField(upload_to=get_safe_upload_path,validators=[validate_dockphoto_size],verbose_name='بارگذاری / تغییر مدارک')
     landline_number = models.CharField(max_length=12,verbose_name='تلفن منزل',null=True,blank=True) 
     mobile_number = models.CharField(max_length=12,verbose_name='تلفن همراه')
     location = models.ForeignKey(ActiveLocations,on_delete=models.PROTECT,verbose_name='واقع در')
@@ -228,8 +255,12 @@ class ServiceRequests(models.Model):
     finalization_status = models.CharField(max_length=100,choices=FinalizationStatus,default=FinalizationStatus.pending,verbose_name='وضعیت اتمام نصب')
 
     pay_status = models.CharField(max_length=30,choices=PayStatus,default=PayStatus.pending,verbose_name='وضعیت پرداخت')
+    account_number = models.ForeignKey(AccountNumber,null=True,blank=True,on_delete=models.CASCADE,verbose_name='شماره حساب')
+    tracking_payment = models.CharField(max_length=20,verbose_name='کد پیگیری پرداخت',null=True,blank=True)
+    payment_date = models.DateField(verbose_name='تاریخ پرداخت',null=True,blank=True)
+    payment_time = models.TimeField(verbose_name='زمان پرداخت',null=True,blank=True)
 
-    marketer = models.CharField(max_length=50,null=True,blank=True,verbose_name='نام بازاریاب')
+    marketer_name = models.ForeignKey(User,on_delete=models.SET_NULL,null=True,blank=True,verbose_name='نام بازاریاب')
     #-----------------------------------------------------
     #Other information
     finished_request = models.BooleanField(default=False,verbose_name='وضعیت اتمام ثبت نام سیستم')
@@ -243,12 +274,38 @@ class ServiceRequests(models.Model):
         if self.tracking_code:
             if not len(str(self.tracking_code)) == 6:
                 raise ValidationError('کد پیگیری حتما باید 6 رقمی باشد .')
-        if self.submission_status == "registered":
-            if not self.virtual_number or not self.port_number :
-                raise ValidationError("لطفا شماره مجازی و شماره پورت را وارد نمایید")
+            
         if self.virtual_number:
             if not (self.virtual_number).isdigit():
                 raise ValidationError('شماره مجازی حتما باید عددی باشد')
+            
+        if self.tracking_payment:
+            if not (self.tracking_payment).isdigit():
+                raise ValidationError("کد پیگیری پرداخت باید عددی باشد")
+    
+        if self.drop_status == "accepted":
+            fields = [
+                self.outdoor_area,
+                self.internal_area,
+                self.fat_index,
+                self.odc_index,
+                self.pole_count,
+                self.headpole_count,
+                self.hook_count,
+            ]
+
+            if any(field is None or field == "" for field in fields):
+                raise ValidationError("برای اتمام کار دراپ وارد کردن جزییات دراپ الزامی است، در صورت نبود مقدار صفر را وارد کنید.")
+            
+        if self.submission_status == "registered":
+            if not self.virtual_number or not self.port_number :
+                raise ValidationError("لطفا شماره مجازی و شماره پورت را وارد نمایید")
+
+        if self.pay_status == "payed":
+            if not self.tracking_payment or not self.payment_date or not self.payment_time or not self.account_number :
+                raise ValidationError("وارد کردن جزییات پرداخت الزامی است : شماره حساب - شماره پیگیری - تاریخ - زمان")
+            
+
 
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}"
@@ -268,3 +325,7 @@ class ServiceRequests(models.Model):
     class Meta :
         verbose_name = "درخواست سرویس"
         verbose_name_plural = "درخواست های سرویس"
+
+
+
+
