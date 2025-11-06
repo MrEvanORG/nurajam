@@ -67,6 +67,7 @@ class OtpVerifyForm(forms.Form):
     
 import re
 class PersonalInfoForm(forms.Form):
+
     first_name = forms.CharField(max_length=24, required=True)
     last_name = forms.CharField(max_length=49, required=True)
     father_name = forms.CharField(max_length=24, required=True)
@@ -90,13 +91,14 @@ class PersonalInfoForm(forms.Form):
         ('12', 'اسفند'),
     ]
     DAY_CHOICES = [(f"{d:02}", f"{d:02}") for d in range(1, 32)]
-    LOCATION_CHOICES = [ (lc.pk,lc.__str__()) for lc in ActiveLocations.objects.all() ]
+    
 
     year = forms.ChoiceField(choices=YEAR_CHOICES, required=True)
     month = forms.ChoiceField(choices=MONTH_CHOICES, required=True)
     day = forms.ChoiceField(choices=DAY_CHOICES, required=True)
 
-    location = forms.ChoiceField(choices=LOCATION_CHOICES,required=True)
+
+    location = forms.ChoiceField(required=True)
 
     id_image = forms.FileField(required=True)
     
@@ -108,6 +110,15 @@ class PersonalInfoForm(forms.Form):
     
     home_phone = forms.CharField(max_length=8, required=False)
     address = forms.CharField(max_length=300, widget=forms.Textarea, required=True)
+
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)            
+        LOCATION_CHOICES = [ 
+            (lc.pk, lc.__str__()) 
+            for lc in ActiveLocations.objects.filter(is_active=True) 
+        ]
+        self.fields['location'].choices = LOCATION_CHOICES
 
     def clean_first_name(self):
         first_name = self.cleaned_data['first_name']
@@ -196,16 +207,21 @@ class PersonalInfoForm(forms.Form):
     
 class ServiceInfoForm(forms.Form):
 
-    payment_priority = {"mi12": 4,"mi6": 3,"mi3": 2,"nocashneed": 1,"cash": 0,}
-
-    modems_qs = ActiveModems.objects.all()
-    MODEMS_SORTED = sorted(modems_qs,key=lambda m: (m.price, {"mi12": 4,"mi6": 3,"mi3": 2,"nocashneed": 1,"cash": 0,}.get(m.payment_method, -1)),reverse=True)
-    PLAN_SORTED = ActivePlans.objects.all().order_by('-data')
-
     SIP_STATUS_CHOICES = [('true', 'بله'), ('false', 'خیر')]
-    PLAN_CHOICES = [ (pl.pk,pl.__str__()) for pl in PLAN_SORTED ]
-    MODEM_CHOICES = [ (mo.pk,mo.__str__()) for mo in MODEMS_SORTED ]
-
     sipstatus = forms.ChoiceField(choices=SIP_STATUS_CHOICES,widget=forms.RadioSelect,initial='no',required=True)
-    plan = forms.ChoiceField(choices=PLAN_CHOICES,required=True)
-    modem = forms.ChoiceField(choices=MODEM_CHOICES,required=True)
+    plan = forms.ChoiceField(required=True)
+    modem = forms.ChoiceField(required=True)
+
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)            
+
+        modems_qs = ActiveModems.objects.filter(is_active=True)
+        self.MODEMS_SORTED = sorted(modems_qs,key=lambda m: (m.price, {"mi12": 4,"mi6": 3,"mi3": 2,"nocashneed": 1,"cash": 0,}.get(m.payment_method, -1)),reverse=True)
+        self.PLAN_SORTED = ActivePlans.objects.filter(is_active=True).order_by('-data')
+
+        PLAN_CHOICES = [ (pl.pk,pl.__str__()) for pl in self.PLAN_SORTED ]
+        MODEM_CHOICES = [ (mo.pk,mo.__str__()) for mo in self.MODEMS_SORTED ]
+
+        self.fields['plan'].choices = PLAN_CHOICES
+        self.fields['modem'].choices = MODEM_CHOICES

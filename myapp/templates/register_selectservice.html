@@ -31,7 +31,7 @@
             </div>
         </div>
      </div>   
-    <div class="box">
+    <div class="box" id="form-section">
         <form method="post" action="#" style="text-align:right;">
             {% csrf_token %}
             <div class="row gtr-50 gtr-uniform">
@@ -137,4 +137,5 @@
 {% block script %}
 <script src="{% static 'js/proc.js' %}"></script>
 <script src="{% static 'js/cost.js' %}"></script>
+<script src="{% static 'js/scroll-into.js' %}"></script>
 {% endblock %}

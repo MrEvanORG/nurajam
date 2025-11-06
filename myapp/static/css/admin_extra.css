@@ -160,3 +160,12 @@ html[data-theme="dark"] {
 
     color-scheme: dark;
 }
+
+.calendarbox{
+    left: 488px !important;
+    top: 130px !important;
+}
+.clockbox{
+    left: 388px !important;
+    top: 250px !important;
+}

@@ -157,7 +157,6 @@ def register_personal(request):
                 "house_is_owner" : form.cleaned_data['ownerstatus'],
                 "landline_number" : form.cleaned_data['home_phone'],
                 "finished_request" : False,
-                "marketer" : 'ثبت نام شده توسط سیستم',
                 "ip_address" : get_ip(request),
                 })
             if created:
@@ -190,10 +189,11 @@ def register_selectservice(request):
     if (not personal_registered) or (not personal_registered == True):
         return redirect(register_personal)
 
+    dbj = ServiceInfoForm()
 
     plans_data_for_js = {
         p.pk: {'name': p.__str__(), 'price': p.price}
-        for p in ServiceInfoForm.PLAN_SORTED
+        for p in dbj.PLAN_SORTED
     }
 
     
@@ -205,7 +205,7 @@ def register_selectservice(request):
             'payment_display': m.get_payment_method_display(),
             'tax':m.added_tax,
         }
-        for m in ServiceInfoForm.MODEMS_SORTED
+        for m in dbj.MODEMS_SORTED
     }
 
     try:

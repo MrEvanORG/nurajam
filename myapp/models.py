@@ -11,6 +11,8 @@ class User(AbstractUser):
     last_name = models.CharField(max_length=20, verbose_name='نام خانوادگی')
     username = models.CharField(max_length=15, unique=True, verbose_name='نام کاربری (شماره تلفن)')
 
+    register_messages = models.BooleanField(verbose_name='ارسال پیامک ثبت نام کاربر',default=False)
+
     role_supervisor = models.BooleanField(verbose_name='نقش (ناظر)',default=False)
     role_operator = models.BooleanField(verbose_name='نقش (اپراتور مخابرات)',default=False)
     role_marketer = models.BooleanField(verbose_name='نقش (بازاریاب)',default=False)
@@ -112,6 +114,7 @@ class AccountNumber(models.Model):
 class ActiveLocations(models.Model):
     name = models.CharField(max_length=50,verbose_name='نام منطقه')
     area_limit = models.CharField(max_length=50,verbose_name='حدود منطقه')
+    is_active = models.BooleanField(verbose_name='وضعیت فعال بودن',default=True)
 
     class Meta :
         verbose_name = "منطقه"
@@ -132,6 +135,7 @@ class ActiveModems(models.Model):
     price = models.BigIntegerField(verbose_name='قیمت مودم (تومان)')
     added_tax = models.BigIntegerField(verbose_name='مالیات بر ارزش افزوده (تومان)',help_text='در صورت نبود مالیات عدد صفر را وارد کنید',default=0)
     payment_method = models.CharField(choices=PaymentChoices,max_length=20,verbose_name='شیوه پرداخت')
+    is_active = models.BooleanField('وضعیت نمایش',default=True)
 
 
     class Meta :
@@ -144,6 +148,7 @@ class ActiveModems(models.Model):
 class ActivePlans(models.Model):
     data = models.IntegerField(verbose_name="حجم ماهانه (گیگابایت)")
     price = models.BigIntegerField(verbose_name="قیمت (تومان)")
+    is_active = models.BooleanField('وضعیت نمایش',default=True)
 
     class Meta :
         verbose_name = "طرح اینترنت"
@@ -190,18 +195,19 @@ class ServiceRequests(models.Model):
         queued = "queued","در صف دراپ کشی "
         accepted = "accepted","دراپ کشی انجام شد"
         rejected = "rejected","عدم امکان دائری فنی"
-        repending = "repending","دراپ تایید نشد ، در انتظار دراپ کشی مجدد" #hidden
+        # repending = "repending","دراپ تایید نشد ، در انتظار دراپ کشی مجدد" #hidden
 
     class SuperVisorStatus(models.TextChoices):
         pending = "pending","در انتظار بررسی ناظر"
         # repending = "repending","در انتظار بازبینی مجدد ناظر"
-        accepted = "accepted","دراپ کشی تایید شد"
-        rejected = "rejected","رد و بازبینی دراپ"
+        accepted = "accepted","تایید دراپ و فیوژن"
+        rejected = "rejected","رد دراپ و فیوژن"
 
     class FusionStatus(models.TextChoices):
         pending = "pending","در انتظار بررسی فیوژن زنی"
         queued = "queued","در صف فیوژن زنی"
         accepted = "accepted","فیوژن زنی انجام شد"
+        repending = "repending","دراپ و فیوژن تایید نشد ، در انتظار بازبینی مجدد شما" #hidden
 
     class FinalizationStatus(models.TextChoices):
         pending = "pending","در انتظار اتمام کار"

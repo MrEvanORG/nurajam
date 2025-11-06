@@ -24,7 +24,7 @@
             </div>
         </div>
      </div>   
-    <div class="box">
+    <div class="box" id="form-section">
         <div class="row gtr-50 gtr-uniform special aln-center">
             <h3 class="pl-0">ثبت نام سرویس شما انجام شد</h3>
             <p class="pl-0 align-center">کاربر محترم ثبت نام سرویس شما با شماره <b>{{mobile}}</b> و کد پستی <b>{{post_code}}</b> با موفقیت انجام شد . <br/>لازم به ذکر است تا قبل از تایید اطلاعات شما توسط کارمندان امکان ورود مجدد شما با همین کدپستی و شماره تلفن جهت تصحیح اطلاعات وجود دارد . </p>
@@ -42,5 +42,6 @@
 
 {% block script %}
 <script src="{% static 'js/proc.js' %}"></script>
+<script src="{% static 'js/scroll-into.js' %}"></script>
 {% endblock %}
 

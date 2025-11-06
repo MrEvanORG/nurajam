@@ -26,7 +26,7 @@ SECRET_KEY = config("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1','nurajam.ir','www.nurajam.ir']
+ALLOWED_HOSTS = ['127.0.0.1','nurajam.ir','www.nurajam.ir','mail.nurajam.ir']
 
 CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1','https://nurajam.ir','https://www.nurajam.ir']
 
@@ -35,23 +35,23 @@ AUTH_USER_MODEL = 'myapp.User'
 # Application definition
 
 INSTALLED_APPS = [
+    # 'jazzmin',
     'jalali_date',
-    'django.contrib.auth',
+    'rangefilter',
+    # 'jformat',
+
     'django.contrib.staticfiles',
+    'django.contrib.auth',
     'django.contrib.sites',
     'django.contrib.sitemaps',
+
     'myapp.apps.MyappConfig',
     'django.contrib.admin',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'admin_reorder',
 ]
 
-ADMIN_REORDER = (
-    ('myapp',('User',)),
-    ('myapp',('ActiveModems','ActivePlans','ActiveLocations')),
-)
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -223,5 +223,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Path where media is stored
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-
 

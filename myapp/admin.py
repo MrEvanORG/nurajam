@@ -9,6 +9,7 @@ from openpyxl.styles import Font, Alignment
 from openpyxl.utils import get_column_letter
 from django.utils.safestring import mark_safe
 from django.contrib.auth import get_user_model 
+from jalali_date.fields import JalaliDateField
 from django.contrib.auth.models import Permission 
 from django.contrib.auth.forms import UserChangeForm
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
@@ -16,7 +17,7 @@ from django.http import  HttpRequest, HttpResponseRedirect , HttpResponse
 from myapp.templatetags.custom_filters import to_jalali_persian , to_jalali
 from .models import User ,ServiceRequests , ActiveLocations , ActiveModems , ActivePlans , OtherInfo , AccountNumber
 from openpyxl.worksheet.dimensions import ColumnDimension, DimensionHolder
-from jalali_date.fields import JalaliDateField
+from rangefilter.filters import DateTimeRangeFilter
 from jalali_date.admin import AdminJalaliDateWidget
 
 class DisplayOnlyWidget(forms.Widget):
@@ -54,6 +55,7 @@ class NoorajamAdminSite(admin.AdminSite):
 
 super_admin_site = NoorajamAdminSite(name='noorajam_admin')
 
+
 @admin.register(ServiceRequests , site=super_admin_site)
 class ServiceRequestsAdmin(admin.ModelAdmin):
     # list_display = ('first_name','last_name','location','mobile_number')
@@ -85,6 +87,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
     def get_list_filter(self, request, obj=None):
         # ترتیب مرجع برای سوپریوزر
         superuser_order = [
+            ("request_time",DateTimeRangeFilter),
             "location",
             "finalization_status",
             "marketer_status",
@@ -101,11 +104,11 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
 
         # نقش‌ها و فیلدهای مرتبط با هر نقش
         role_fields = {
-            "role_marketer": ("location", "finalization_status", "marketer_status", "pay_status", "submission_status"),
+            "role_marketer": ("location","marketer_status", "pay_status"),
             "role_supervisor": ("location", "supervisor_status"),
             "role_dropagent": ("location", "drop_status"),
             "role_operator":("location","submission_status"),
-            "role_fusionagent": ("location", "finalization_status", "fusion_status"),
+            "role_fusionagent": ("location","fusion_status"),
         }
 
         # جمع‌آوری فیلدها بدون تکرار
@@ -170,10 +173,12 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
         user = getattr(self, '_current_user', None)
         if user:
             if user.is_superuser:
-                if obj.finalization_status == "pending":
+                if  obj.finalization_status == "ended":
+                    return format_html('<span style="color:limegreen;">● تحویل و اتمام کار</span>')
+                elif obj.submission_status == "registered":
+                    return format_html('<span style="color: darkgoldenrod;">● در انتظار ثبت اتمام کار</span>')
+                elif obj.submission_status != "registered":
                     return format_html('<span style="color: darkgoldenrod;">● سرویس درجریان نصب است</span>')
-                elif obj.finalization_status == "ended":
-                    return format_html('<span style="color:limegreen;">● تحویل و اتمام سرویس</span>')
 
             if user.role_marketer:
                 if obj.marketer_status == "accepted":
@@ -192,14 +197,14 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
                     return format_html('<span style="color:darkgoldenrod;">● در انتظار دراپ کشی</span>')
                 elif obj.drop_status == "queued":
                     return format_html('<span style="color:darkgoldenrod;">● در صف دراپ کشی</span>')
-                elif obj.drop_status == "repending":
-                    return format_html('<span style="color:darkgoldenrod;">● دراپ توسط ناظر رد شد ، در انتظار بازبینی مجدد شما</span>')
+                # elif obj.drop_status == "repending":
+                #     return format_html('<span style="color:darkgoldenrod;">● دراپ توسط ناظر رد شد ، در انتظار بازبینی مجدد شما</span>')
                 
             if user.role_supervisor:
                 if obj.supervisor_status == "accepted":
-                    return format_html('<span style="color:limegreen;">● دراپ تایید شد</span>')
+                    return format_html('<span style="color:limegreen;">● دراپ و فیوژن تایید شد</span>')
                 elif obj.supervisor_status == "rejected":
-                    return format_html('<span style="color: red ;">● دراپ رد شد</span>')
+                    return format_html('<span style="color: red ;">● دراپ و فیوژن رد شد</span>')
                 elif obj.supervisor_status == "pending":
                     return format_html('<span style="color: darkgoldenrod ;">● در انتظار بررسی ناظر</span>')
                 
@@ -217,6 +222,8 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
                     return format_html('<span style="color: darkgoldenrod;">● در انتظار فیوژن زنی</span>')
                 elif obj.fusion_status == "queued":
                     return format_html('<span style="color: darkgoldenrod;">● در صف فیوژن زنی</span>')
+                elif obj.fusion_status== "repending":
+                    return format_html('<span style="color:darkgoldenrod;">● نصب توسط ناظر رد شد ، در انتظار بازبینی مجدد شما</span>')
     ispan.short_description = 'وضعیت' # type: ignore
 
     def get_queryset(self, request):
@@ -239,26 +246,28 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
         if user.role_dropagent:
             combined_q |= (
                 Q(marketer_status=ServiceRequests.MarketerFormStatus.accepted) &
+                Q(fusion_status=ServiceRequests.FusionStatus.pending)
+            )
+
+        # شرط فیوژن زن:
+        if user.role_fusionagent:
+            combined_q |= (
+                Q(drop_status=ServiceRequests.DropStatus.accepted) &
                 ~Q(supervisor_status=ServiceRequests.SuperVisorStatus.accepted)
             )
 
         # شرط ناظر (سوپروایزر):
         if user.role_supervisor:
             combined_q |= (
-                ( Q(drop_status=ServiceRequests.DropStatus.accepted) | Q(drop_status=ServiceRequests.DropStatus.repending) ) & ( Q(fusion_status=ServiceRequests.FusionStatus.pending) )
+                ( Q(fusion_status=ServiceRequests.FusionStatus.accepted) | Q(fusion_status=ServiceRequests.FusionStatus.repending) ) &
+                   Q(submission_status=ServiceRequests.SubmissionStatus.pending)
             )
 
-        # شرط فیوژن زن:
-        if user.role_fusionagent:
+        #شرط اپراتور
+        if user.role_operator:
             combined_q |= (
                 Q(supervisor_status=ServiceRequests.SuperVisorStatus.accepted) &
                 Q(finalization_status=ServiceRequests.FinalizationStatus.pending)
-            )
-
-        if user.role_operator:
-            combined_q |= (
-                Q(fusion_status=ServiceRequests.FusionStatus.accepted) &
-                ~Q(finalization_status=ServiceRequests.FinalizationStatus.ended)
             )      
 
         return qs.filter(combined_q).distinct()
@@ -272,9 +281,10 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
     def has_view_history_permission(self,request,obj=None): return request.user.is_superuser
 
     def formfield_for_choice_field(self, db_field, request, **kwargs):
+
         formfield = super().formfield_for_choice_field(db_field, request, **kwargs)
 
-        if db_field.name == "drop_status":
+        if db_field.name == "fusion_status":
             all_choices = list(formfield.choices)
 
             # hidden choice
@@ -286,7 +296,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
             if obj_id:
                 obj = ServiceRequests.objects.filter(pk=obj_id).first()
                 if obj:
-                    current_value = obj.drop_status
+                    current_value = obj.fusion_status
 
             # اگر مقدار فعلی repending نیست → حذفش کن
             if current_value != hidden_value:
@@ -313,12 +323,12 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
             old_obj = self.model.objects.get(pk=obj.pk)
 
             # اگر از pending به accepted رفت
-            if old_obj.drop_status in ['pending','repending'] and form.cleaned_data.get('drop_status','') in ["accepted","queued"]:
+            if old_obj.fusion_status in ['pending','repending','queued'] and form.cleaned_data.get('fusion_status','') == "accepted" :
                 obj.supervisor_status = 'pending'
 
             # اگر ناظر رد کرد → وضعیت repending
             if old_obj.supervisor_status != 'rejected' and form.cleaned_data.get('supervisor_status','') == 'rejected':
-                obj.drop_status = 'repending'
+                obj.fusion_status = 'repending'
 
 
             obj.save()
@@ -329,8 +339,8 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
 
         MASTER_FIELDSETS_STRUCTURE = (
             ('وضعیت نصب', {
-                'fields': ('marketer_status', 'drop_status', 'supervisor_status',
-                           'fusion_status', 'submission_status','virtual_number','port_number','finalization_status'),
+                'fields': ('marketer_status', 'drop_status', 'fusion_status','supervisor_status',
+                            'submission_status','virtual_number','port_number','finalization_status'),
                 'classes': ('collapse',)
             }),
             ('وضعیت پرداخت', {
@@ -396,7 +406,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
                 'سایر اطلاعات': ['contact_user', 'tracking_code', 'jalali_request_time'],
             },
             'role_fusionagent': {
-                'وضعیت نصب': ['fusion_status','pay_status', 'finalization_status'],
+                'وضعیت نصب': ['fusion_status'],
                 'وضعیت پرداخت':['pay_status', 'account_number', 'tracking_payment','payment_date','payment_time'],
                 'اطلاعات دراپ': ['outdoor_area', 'internal_area', 'fat_index', 'odc_index', 'pole_count', 'headpole_count', 'hook_count'],
                 'اطلاعات شخصی': ['first_name', 'last_name', 'landline_number', 'mobile_number', 'address', 'location', 'post_code'],
@@ -526,7 +536,6 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
                 'tracking_payment',
                 'payment_date',
                 'payment_time',
-                'finalization_status',
             },
             'role_operator': {
                 'submission_status',
@@ -583,7 +592,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
                         form.base_fields['marketer_name'].widget = DisplayOnlyWidget(obj.get_full_name(),color="#B6771D")
                 
             #رد انلی شدن تایید مدارک
-                if request.user.role_marketer or request.user.is_superuser:
+                if getattr(request.user, "role_marketer", False) or request.user.is_superuser:
                     if obj.drop_status == "accepted":
 
                         form.base_fields['marketer_status'].disabled = True
@@ -597,66 +606,46 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
                         "امکان تغییر این بخش وجود ندارد ، سرویس در صف دراپ کشی قرار گرفته است", color="#B6771D")
         
                 #رد انلی شدن دراپ 
-                if request.user.role_dropagent or request.user.is_superuser:
+                if getattr(request.user, "role_dropagent", False) or request.user.is_superuser:
                     if obj.marketer_status != "accepted":
                         form.base_fields['drop_status'].disabled = True
                         form.base_fields['drop_status'].widget = DisplayOnlyWidget(
                         "در انتظار تایید مدارک و اطلاعات توسط بازاریاب", color="crimson"
                             )
-                    if obj.supervisor_status == "accepted":
+                    if obj.fusion_status != "pending" :
                         form.base_fields['drop_status'].disabled = True
                         form.base_fields['drop_status'].widget = DisplayOnlyWidget(
-                        "دراپ توسط ناظر تایید شده امکان تغییر وضعیت وجود ندارد", color="#B6771D"
+                        "امکان تغییر وضعیت دراپ وجود ندارد ، سرویس در حال فیوژن زنی است", color="#B6771D"
                             )
-                #رد انلی شدن ناظر
-                if request.user.role_supervisor or request.user.is_superuser:
-
-                    if obj.drop_status != "accepted" :
-                        form.base_fields['supervisor_status'].disabled = True
-                        form.base_fields['supervisor_status'].widget = DisplayOnlyWidget(
-                        "امکان بازبینی وجود ندارد ، دراپ کشی هنوز انجام نشده است", color="crimson")                     
-                    elif obj.fusion_status == "queued" :
-                        form.base_fields['supervisor_status'].disabled = True
-                        form.base_fields['supervisor_status'].widget = DisplayOnlyWidget(
-                        "امکان تغییر وجود ندارد ، سرویس در صف فیوژن زنی قرار گرفته است", color="#B6771D")
-                                        
-                    elif obj.fusion_status == "accepted":
-                        form.base_fields['supervisor_status'].disabled = True
-                        form.base_fields['supervisor_status'].widget = DisplayOnlyWidget(
-                        "امکان تغییر وجود ندارد ، فیوژن زنی سرویس انجام شده است", color="#B6771D")      
-                        
                 #رد انلی شدن فیوژن
-                if request.user.role_fusionagent or request.user.is_superuser:
-                    if obj.supervisor_status != "accepted":
+                if getattr(request.user, "role_fusionagent", False) or request.user.is_superuser:
+                    if obj.drop_status != "accepted":
                         form.base_fields['fusion_status'].disabled = True
                         form.base_fields['fusion_status'].widget = DisplayOnlyWidget(
-                        "امکان فیوژن زنی وجود ندارد دراپ هنوز توسط ناظر تایید نشده است", color="crimson")
-                    if obj.submission_status == "registered":
+                        "امکان فیوژن زنی وجود ندارد دراپ کشی هنوز انجام نشده است", color="crimson")
+                    elif obj.supervisor_status == "accepted" :
                         form.base_fields['fusion_status'].disabled = True
                         form.base_fields['fusion_status'].widget = DisplayOnlyWidget(
-                        "امکان تغییر وجود ندارد ، فرم ثبت شده است", color="#B6771D")
+                        "امکان تغییر وجود ندارد ، سرویس توسط ناظر تایید شده است", color="#B6771D")
 
-                # رد انلی شدن فانالیزیشن
-                if  request.user.role_fusionagent or request.user.is_superuser :
-                    if obj.fusion_status != "accepted" and  obj.submission_status != "registered":
-                        form.base_fields['finalization_status'].disabled = True
-                        form.base_fields['finalization_status'].widget = DisplayOnlyWidget(
-                        "امکان ثبت نهایی وجود ندارد وضعیت فیوژن و ثبت فرم ناتمام است", color="crimson")
-                    elif obj.fusion_status != "accepted" and obj.submission_status == "registered":
-                        form.base_fields['finalization_status'].disabled = True
-                        form.base_fields['finalization_status'].widget = DisplayOnlyWidget(
-                        "امکان ثبت نهایی وجود ندارد وضعیت فیوژن ناتمام است", color="crimson")
-                    elif obj.fusion_status == "accepted" and obj.submission_status != "registered":
-                        form.base_fields['finalization_status'].disabled = True
-                        form.base_fields['finalization_status'].widget = DisplayOnlyWidget(
-                        "امکان ثبت نهایی وجود ندارد فرم ثبت نام هنوز ثبت نشده است", color="crimson")
-
+                #رد انلی شدن ناظر
+                if getattr(request.user, "role_supervisor", False) or request.user.is_superuser:
+                    if obj.fusion_status != "accepted" :
+                        form.base_fields['supervisor_status'].disabled = True
+                        form.base_fields['supervisor_status'].widget = DisplayOnlyWidget(
+                        "امکان بازبینی وجود ندارد ، دراپ و فیوژن هنوز اجرانشده است", color="crimson")                     
+                                        
+                    elif obj.submission_status == "registered":
+                        form.base_fields['supervisor_status'].disabled = True
+                        form.base_fields['supervisor_status'].widget = DisplayOnlyWidget(
+                        "امکان تغییر وجود ندارد ، فرم ثبت شده است", color="#B6771D")      
+                        
                 #رد انلی شدن ثبت فرم
-                if request.user.role_operator or request.user.is_superuser :
-                    if obj.fusion_status != "accepted":
+                if getattr(request.user, "role_operator", False) or request.user.is_superuser :
+                    if obj.supervisor_status != "accepted":
                         form.base_fields['submission_status'].disabled = True
                         form.base_fields['submission_status'].widget = DisplayOnlyWidget(
-                        "امکان ثبت فرم وجود ندارد ، فیوژن زنی هنوز انجام نشده است", color="crimson")
+                        "امکان ثبت فرم وجود ندارد ، ناظر هنوز نصب را تایید نکرده است", color="crimson")
                     elif obj.finalization_status == "ended":
 
                         form.base_fields['virtual_number'].disabled = True
@@ -671,6 +660,15 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
                         form.base_fields['submission_status'].disabled = True
                         form.base_fields['submission_status'].widget = DisplayOnlyWidget(
                         "امکان تغییر وضعیت وجود ندارد ، سرویس ثبت نهایی شده است", color="#B6771D")
+
+                # رد انلی شدن فانالیزیشن
+                if getattr(request.user, "role_fusionagent", False) or request.user.is_superuser:
+                    if obj.submission_status != "registered":
+                        form.base_fields['finalization_status'].disabled = True
+                        form.base_fields['finalization_status'].widget = DisplayOnlyWidget(
+                        "امکان ثبت نهایی وجود ندارد فرم هنوز ثبت نشده است", color="crimson")                     
+ 
+
             except Exception as e:
                 print(e)
      
@@ -739,7 +737,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
                 obj.get_marketer_status_display(),
                 obj.outdoor_area or "",
                 obj.internal_area or "",
-                obj.marketer or "",
+                "" if not obj.marketer_name else obj.marketer_name.get_full_name(),
                 request_time_str,
             ]
             
@@ -780,7 +778,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
         
 @admin.register(ActiveLocations,site=super_admin_site)
 class ActiveLocationsAdmin(admin.ModelAdmin):
-    list_display = ("name","area_limit")
+    list_display = ("name","area_limit","is_active")
 
     def has_view_permission(self, request, obj=None):
         return (True if request.user.is_superuser or request.user.role_marketer else False)
@@ -796,7 +794,7 @@ class ActiveLocationsAdmin(admin.ModelAdmin):
 
 @admin.register(ActiveModems,site=super_admin_site)
 class ActiveModemsAdmin(admin.ModelAdmin):
-    list_display = ("name","price","payment_method")
+    list_display = ("name","price","payment_method","is_active")
 
     def has_view_permission(self, request, obj=None):
         return (True if request.user.is_superuser or request.user.role_marketer else False)
@@ -812,7 +810,8 @@ class ActiveModemsAdmin(admin.ModelAdmin):
 
 @admin.register(ActivePlans,site=super_admin_site)
 class ActivePlansAdmin(admin.ModelAdmin):
-    list_display = ("data","price")
+    list_display = ("data","price","is_active")
+    ordering = ("data","is_active","price")
 
     def has_view_permission(self, request, obj=None):
         return (True if request.user.is_superuser or request.user.role_marketer else False)
@@ -875,7 +874,7 @@ class UserAdmin(BaseUserAdmin):
         ('اطلاعات شخصی', {'fields': ('first_name', 'last_name', 'email')}),
         ('نقش ها',{'fields':('role_supervisor','role_marketer','role_dropagent','role_fusionagent','role_operator')}),
         # ('دسترسی ها', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
-        ('دسترسی ها', {'fields': ('is_active', 'is_staff', 'is_superuser', 'user_permissions')}), # گروه ها حذف شد 
+        ('دسترسی ها', {'fields': ('is_active', 'is_staff', 'is_superuser', 'user_permissions','register_messages')}), # گروه ها حذف شد 
         ('تاریخ های مهم', {'fields': ('jalali_last_login', 'jalali_date_joined')}),
     )
 
