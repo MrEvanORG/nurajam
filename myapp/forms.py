@@ -225,3 +225,22 @@ class ServiceInfoForm(forms.Form):
 
         self.fields['plan'].choices = PLAN_CHOICES
         self.fields['modem'].choices = MODEM_CHOICES
+
+class TrackingCodeForm(forms.Form):
+    tracking_code = forms.CharField(max_length=6,required=True,label='کد پیگیری')
+
+    def clean_tracking_code(self):
+        code = fix_numbers(self.cleaned_data['tracking_code'])
+
+        if not code.isdigit():
+            raise ValidationError("کد پیگیری باید عددی باشد")
+
+        if not len(code) == 6 :
+            raise ValidationError("کد پیگیری باید حتما 6 رقمی باشد")
+        srv = ServiceRequests.objects.filter(tracking_code=int(code))
+
+        if not srv.exists() :
+            raise ValidationError("کد پیگیری نامعتبر است ")
+        
+        return code
+        

@@ -1,0 +1,34 @@
+{% extends 'patterns/base.html' %}
+{% load static %}
+{% block title %}پیگیری وضعیت ثبت نام سرویس | نوراجم{% endblock %}
+{% block header %}<header id="header" class="reveal">{% endblock %}
+{% block content %}
+<section id="main" class="container medium">
+    <header>
+        <h2 style="margin-bottom:2em;">پیگیری سرویس</h2>
+        {% comment %} <p>جهت پیگیری سرویس ثبت نام شده کد پیگیری دریافت شده را وارد کنید</p> {% endcomment %}
+    </header>
+    <div class="box special" id="form-section">
+        <form method="post">
+            {% csrf_token %}
+            <div class="row gtr-50 gtr-uniform aln-center" >    
+                <div class="col-12 pl-0">
+                    <h3>پیگیری وضعیت ثبت نام / نصب سرویس</h3>
+                    <p>لطفا کد پیگیری 6 رقمی را به صورت صحیح وارد کنید ، توجه داشته باشید ممکن است در صورتی که مدت زیادی از تحویل سرویستان گذشته باشد ، سرویستان قابل پیگیری نباشد </p>
+                </div>
+            </div>
+
+            <div class="row gtr-50 gtr-uniform aln-center" style="margin-top:1em;">
+                <div class="col-9 col-12-mobilep">
+                    <input type="number" inputmode="numeric" pattern="[0-9]*" name="tracking_code" placeholder="کد پیگیری" maxlength=6 class="rtl-placeholder" {% if form.tracking_code.value %}value={{form.tracking_code.value}}{% endif %} required  />
+                </div>
+                <div class="col-3 col-12-mobilep">
+                    <input type="submit" value="بررسی" class="fit" />
+                </div>
+                {% if form.tracking_code.errors %}<span class="span-error">{{ form.tracking_code.errors.0 }}</span>{% endif %}
+            </div>
+            
+        </form>
+    </div>
+</section>
+{% endblock %}

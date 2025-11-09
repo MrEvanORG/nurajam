@@ -88,7 +88,7 @@
 <script>
     const isPostback = {{ is_postback|yesno:"true,false" }};
 </script>
-<script src="{% static 'js/proc.js' %}"></script>
 <script src="{% static 'js/otp.js' %}"></script>
-<script src="{% static 'js/scroll-into.js' %}"></script>
+<script src="{% static 'js/proc.js' %}" defer></script>
+<script src="{% static 'js/scroll-into.js' %}" defer></script>
 {% endblock %}

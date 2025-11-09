@@ -1,0 +1,25 @@
+{% extends 'patterns/base.html' %}
+{% load static %}
+{% block title %}وضعیت ثبت نام | نصب سرویس | نوراجم{% endblock %}
+{% block header %}<header id="header" class="reveal">{% endblock %}
+{% block content %}
+<section id="main" class="container medium">
+    <header>
+        <h2>پیگیری ثبت نام سرویس</h2>
+    </header>
+    <div class="box" id="form-section">
+        <div class="row gtr-50 gtr-uniform special aln-center">
+            <h3 class="pl-0 align-center">استعلام وضعیت سرویس با کد پستی {{post_code}}</h3>
+            <p class="pl-0 align-center">{{text |safe}}</p>
+            <h4 class="pl-0">کد پیگیری سرویس شما :<code>{{tracking_code}}</code></h4>
+            <div class="col-12 pl-0">
+                <ul class="actions special stacked aln-center" style="align-items:center;">
+                    <li class="pr-0" style="direction:ltr;"><a href="{{ support_phone }}" class="button icon solid fa-phone-alt" id="submit-button" > تماس با پشتیبانی</a></li>
+                    <li class="pr-0"><a class="button" id="submit-button" href={% url 'index' %}>بازگشت به برگه نخست</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

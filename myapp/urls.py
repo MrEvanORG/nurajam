@@ -14,6 +14,11 @@ urlpatterns = [
     path('register/select_service', views.register_selectservice, name='register-service'),
     path('register/contract_drafted', views.register_contractdrafted, name='register-contract'),
 
+    #tracking
+    path('tracking/enter_code', views.tracking_entercode, name='tracking-entercode'),
+    path('tracking/result', views.tracking_result, name='tracking-result'),
+
+
     path('send-sms-to-admins/', views.send_sms_page_view, name='send_sms_page'),
 
     path('send-sms-to-user', views.send_sms_page_view_user, name='send_user_message'),

@@ -1,19 +1,19 @@
 import json
-from .forms import SmsForm , RegiterphonePostForm , OtpVerifyForm , PersonalInfoForm , ServiceInfoForm
+import datetime
+from .addons import *
 from django.urls import reverse
-from django.shortcuts import render
 from django.contrib import messages
 from .models import User , OtherInfo
-from django.http import HttpResponseRedirect 
-from .models import ActiveModems , ActivePlans, ActiveLocations , OtherInfo , ServiceRequests
-from django.contrib.admin.views.decorators import staff_member_required
-from django.core.serializers.json import DjangoJSONEncoder
-from django.shortcuts import redirect
-from .addons import *
-import datetime
 from django.http import HttpResponse
+from django.shortcuts import redirect
+from django.http import HttpResponseRedirect 
+from django.shortcuts import render , get_object_or_404
+from django.core.serializers.json import DjangoJSONEncoder
 from myapp.templatetags.custom_filters import to_jalali_persian
-
+from django.contrib.admin.views.decorators import staff_member_required
+from .models import ActiveModems , ActivePlans, ActiveLocations , OtherInfo , ServiceRequests
+from .forms import SmsForm , RegiterphonePostForm , OtpVerifyForm , PersonalInfoForm , ServiceInfoForm ,TrackingCodeForm
+#-------------------------------------------#
 
 def generate_tracking_code():
     while True:
@@ -295,6 +295,73 @@ def register_contractdrafted(request):
     del request.session['register']
 
     return render(request,'register_contractdrafted.html',initial_data)
+
+def tracking_text_generator(service):
+    number = service.mobile_number
+    postcode = service.post_code
+    text = "مشترک گرامی "
+    if service.marketer_status == "accepted":
+        if service.drop_status == "accepted":
+            if service.fusion_status == "accepted":
+                if service.supervisor_status == "accepted":
+                    if service.submission_status == "registered":
+                        text += "نصب و راه اندازی سرویس شما به اتمام رسیده است ، احتمالا در حال استفاده از سرویس خود هستید در صورت هرگونه مشکل با مخابرات منطقه تماس حاصل فرمایید ."
+                    elif service.submission_status == "pending":
+                        text += "نصب و تایید سرویس شما انجام شده است ، پس از ثبت سرویس در مخابرات منطقه قادر به استفاده از اینترنت پر سرعت مخابرات ایران هستید ."
+                else:
+                    text += "نصب سرویس شما انجام شده است ، پس از تایید نصب شما توسط کارشناسان و ثبت سرویس در مخابرات منطقه قادر به استفاده از اینترنت پر سرعت شرکت مخابرات ایران خواهید بود ."
+            else:
+                text += "سرویس شما در مرحله نصب است ، پس از اتمام نصب سرویس و راه اندازی سرویس شما در مخابرات منطقه قادر به استفاده از اینترنت پرسرعت شرکت مخابرات ایران خواهید بود ."
+        elif service.drop_status == "rejected":
+            text += "متاسفانه امکان نصب و راه اندازی سرویس برای شما وجود ندارد ، جهت اطلاعات بیشتر با پشتیبانی تماس حاصل فرمایید ."
+        else:
+            text += "سرویس شما در مرحله نصب است ، پس از اتمام نصب سرویس و راه اندازی سرویس شما در مخابرات منطقه قادر به استفاده از اینترنت پرسرعت شرکت مخابرات ایران خواهید بود ."
+    elif service.marketer_status == "rejected":
+        text += f"اطلاعات شخصی یا سرویس انتخاب شده شما توسط کارشناسان رد شده است لطفا با شماره {number} و کدپستی {postcode} اقدام به ثبت نام سرویس کنید و اطلاعات خود را در مرحله ثبت نام ویرایش کنید\n، جهت اطلاعات بیشتر درباره علت رد شدن سرویس خود میتوانید با پشتیبانی تماس حاصل فرمایید ."
+    else:
+        text += " ثبت نام سرویس شما با موفقیت انجام شد پس از تایید اطلاعات شما توسط کارشناسان فرایند نصب سرویس شما آغاز میشود ."
+
+    if service.pay_status == "pending":
+        text += '<br><br>ضمنا هزینه نصب و راه اندازی سرویس توسط شما پرداخت نشده است لطفا با پشتیبانی تماس حاصل کرده و نسبت به پرداخت مبلغ قرار داد شده اقدام نمایید .'
+
+    return text
+
+
+def tracking_entercode(request):
+
+    form = TrackingCodeForm()
+    
+    if request.method == "POST":
+        form = TrackingCodeForm(request.POST)
+        if form.is_valid() :
+            request.session['trackingcode'] = form.cleaned_data['tracking_code']
+            return redirect(tracking_result)
+    
+    return render(request,'tracking_entercode.html',{"form":form})
+
+
+def tracking_result(request):
+    session = request.session.get('trackingcode',None)
+    if not session :
+        return redirect(tracking_entercode)
+    
+    tracking_code = int(session)
+    service = get_object_or_404(ServiceRequests,tracking_code=tracking_code)
+    text = tracking_text_generator(service)
+
+    config = OtherInfo.get_instance()
+
+    context = {
+        "text":text,
+        "post_code":service.post_code,
+        "tracking_code":service.tracking_code,
+        "support_phone":config.contact_number,
+    }
+
+    del request.session['trackingcode']
+    return render(request,'tracking_result.html',context=context)
+
+
 
 @staff_member_required
 def send_sms_page_view(request):

@@ -74,8 +74,14 @@ class OtherInfo(models.Model):
     drop_cost = models.BigIntegerField(verbose_name='هزینه دراپ کشی (تومان)')
     center_name = models.CharField(max_length=25,verbose_name='نام مرکز مخابرات')
     center_address = models.CharField(max_length=200,verbose_name='آدرس مرکز')
-    contact_number = models.CharField(max_length=12,verbose_name='شماره تماس با ما')
+    contact_number = models.CharField(max_length=20,verbose_name='شماره تماس با ما (پشتیبانی)')
     site_linenumber = models.CharField(max_length=20,verbose_name='شماره ثابت سایت')
+
+    link_phone = models.CharField(max_length=100,verbose_name='لینک تماس (فوتر)',null=True,blank=True)
+    link_mail = models.CharField(max_length=100,verbose_name='لینک ایمیل (فوتر)',null=True,blank=True)
+    link_instagram = models.CharField(max_length=100,verbose_name='لینک اینستاگرام (فوتر)',null=True,blank=True)
+    link_whatsapp = models.CharField(max_length=100,verbose_name='لینک واتساپ (فوتر)',null=True,blank=True)
+
 
     def save(self,*args,**kwargs):
         self.pk = 1
