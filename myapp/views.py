@@ -192,7 +192,7 @@ def register_selectservice(request):
     dbj = ServiceInfoForm()
 
     plans_data_for_js = {
-        p.pk: {'name': p.__str__(), 'price': p.price}
+        p.pk: {'name': p.__str__(), 'price': p.price,'plan_type': p.plan_type}
         for p in dbj.PLAN_SORTED
     }
 
@@ -244,8 +244,10 @@ def register_selectservice(request):
             rq.plan = plan
             rq.modem = modem
             rq.finished_request = True
+            contract_data = rq.generate_contract_snapshot()     
+            rq.contract_snapshot = contract_data
 
-            rq.save(update_fields=['sip_phone','modem','plan','finished_request'])
+            rq.save(update_fields=['sip_phone','modem','plan','finished_request','contract_snapshot'])
             from .addons import send_system_to_user_message
             sms_result = send_system_to_user_message(phone=initial_data.get('mobile'),message=f'کاربر گرامی ثبت نام سرویس شما با موفقیت انجام شد\nکد پیگیری سرویس شما : {rq.tracking_code}\nلغو11')
             from django.utils import timezone
@@ -362,7 +364,6 @@ def tracking_result(request):
     return render(request,'tracking_result.html',context=context)
 
 
-
 @staff_member_required
 def send_sms_page_view(request):
     user_ids = request.session.get('selected_user_ids_for_sms')
@@ -446,3 +447,5 @@ def send_sms_page_view(request):
 @staff_member_required
 def send_sms_page_view_user(request):
     pass
+
+

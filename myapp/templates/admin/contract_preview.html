@@ -1,0 +1,125 @@
+{% load custom_filters %} {% load static %}
+
+<style>
+    /* استایل‌های مخصوص مودال برای جلوگیری از تداخل با ادمین */
+    #contract-preview-body {
+        direction: rtl;
+        text-align: right;
+        font-family: "shabnam", Tahoma, sans-serif; /* فونت خودتان را بگذارید */
+        background:var(--hairline-color);
+        padding: 20px;
+    }
+    .table-wrapper { margin-bottom: 2em; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 0.75em; border: 1px solid #eee; }
+</style>
+
+<div id="contract-preview-body">
+    <header>
+        <h3>جزئیات قرارداد ثبت شده (Snapshot)</h3>
+        <p>کد پیگیری: {{ tracking_code }} | تاریخ اسنپ شات: {{ data.generated_at }}</p>
+    </header>
+
+    <div class="box">
+        <h4>خدمات انتخابی</h4>
+        <div class="table-wrapper">
+            <table class="alt">
+                <thead>
+                    <tr><th>خدمات</th><th>نوع پرداخت</th><th>هزینه</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>دراپ کشی</td>
+                        <td>نقدی</td>
+                        <td>{{ data.costs.drop_cost|format_cost_number }} تومان</td>
+                    </tr>
+
+                    {% if data.costs.sip_cost > 0 %}
+                    <tr>
+                        <td>سیپ فون (تلفن ثابت)</td>
+                        <td>نقدی</td>
+                        <td>{{ data.costs.sip_cost|format_cost_number }} تومان</td>
+                    </tr>
+                    {% endif %}
+
+                    <tr>
+                        <td>{{ data.modem.name }}</td>
+                        <td>
+                            {{ data.modem.payment_method_display }}
+                            {% if data.modem.payment_method != 'cash' %} (روی قبض){% endif %}
+                        </td>
+                        <td>{{ data.modem.base_price|format_cost_number }} تومان</td>
+                    </tr>
+
+                    {% if data.modem.tax > 0 %}
+                    <tr>
+                        <td>مالیات بر ارزش افزوده مودم</td>
+                        <td>نقدی با اولین قبض</td>
+                        <td>{{ data.modem.tax|format_cost_number }} تومان</td>
+                    </tr>
+                    {% endif %}
+
+                    <tr>
+                        <td>{{ data.plan.name }}</td>
+                        <td>
+                            {% if data.plan.type == 'prepayment' %}
+                                پرداخت با اولین قبض
+                            {% else %}
+                                پرداخت قبض ماهانه
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if data.plan.type == 'prepayment' %}
+                                {{ data.calculations.plan_total_cost|format_cost_number }} تومان
+                            {% else %}
+                                {{ data.plan.base_price|format_cost_number }} تومان
+                            {% endif %}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h4>نحوه پرداخت</h4>
+        <div class="table-wrapper">
+            <table class="alt">
+                <tbody>
+                    <tr>
+                        <td>پرداخت نقدی</td>
+                        <td>{{ data.calculations.cash_payment_upfront|format_cost_number }} تومان</td>
+                    </tr>
+
+                    {% if data.calculations.first_bill_amount > 0 %}
+                    <tr>
+                        <td>
+                            اولین پرداخت قبض
+                            {% if data.modem.tax > 0 %}(به همراه مالیات مودم){% endif %}
+                        </td>
+                        <td>{{ data.calculations.first_bill_amount|format_cost_number }} تومان</td>
+                    </tr>
+                    {% endif %}
+
+                    {% if data.calculations.duration_months > 1 and data.calculations.next_bill_amount > 0 %}
+                    <tr>
+                        <td>
+                           {{ data.calculations.duration_months|add:"-1" }} پرداخت بعدی قبض
+                        </td>
+                        <td>
+                             {{ data.calculations.next_bill_amount|format_cost_number }} تومان
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    <tr style="font-weight: bold;">
+
+                        <td>مجموع هزینه ها تا {{ data.calculations.duration_months }} ماه</td>
+                        <td>{{ data.calculations.total_contract_sum|format_cost_number }} تومان</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+

@@ -19,6 +19,7 @@ from .models import User ,ServiceRequests , ActiveLocations , ActiveModems , Act
 from openpyxl.worksheet.dimensions import ColumnDimension, DimensionHolder
 from rangefilter.filters import DateTimeRangeFilter
 from jalali_date.admin import AdminJalaliDateWidget
+from django.contrib import messages
 
 class DisplayOnlyWidget(forms.Widget):
     def __init__(self, text, color="black", *args, **kwargs):
@@ -54,7 +55,6 @@ class NoorajamAdminSite(admin.AdminSite):
         return app_list
 
 super_admin_site = NoorajamAdminSite(name='noorajam_admin')
-
 
 @admin.register(ServiceRequests , site=super_admin_site)
 class ServiceRequestsAdmin(admin.ModelAdmin):
@@ -149,6 +149,24 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
         return format_html(f"""<a class="button" href="{word_url}">Word دانلود</a>&nbsp; - 
                            <a class="button" href="{pdf_url}">Pdf دانلود</a>""")
     download_form.short_description = "دانلود فرم ثبت نام" # type: ignore
+
+    class Media:
+        css = {
+            'all': ('css/admin_modal.css',)
+        }
+        js = ('js/admin_modal.js',) 
+
+    def view_contract_button(self, obj):
+        if obj.contract_snapshot:
+            url = reverse('admin_contract_preview', args=[obj.id])
+            return format_html(
+                '<a class="button" href="javascript:void(0);" onclick="openContractModal(\'{}\')">📄 مشاهده قرارداد</a>',
+                url
+            )
+        return "-"
+    
+    view_contract_button.short_description = "قرارداد"
+    view_contract_button.allow_tags = True
 
     def documents_box(self, obj):
         if not obj.documents:
@@ -354,7 +372,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
                 'classes': ('collapse',)
             }),
             ('باکس دانلود', {
-                'fields': ('documents_box','download_form','documents','marketer_name'), 
+                'fields': ('documents_box','download_form','documents','view_contract_button','marketer_name'), 
                 'classes': ('collapse',)
             }),
             ('اطلاعات شخصی', {
@@ -479,7 +497,8 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
             "contact_user",
             "download_form",
             "documents_box",
-            "documents_upload", 
+            "documents_upload",
+            "view_contract_button", 
             "log_msg_status",
             "ip_address",
             "jalali_request_time",
@@ -674,7 +693,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
      
         return form
     
-    actions = ['export_excel_information']
+    actions = ['export_excel_information','generate_snapshots']
 
     @admin.action(description='خروجی اکسل برای کاربران انتخاب شده')
     def export_excel_information(self, request, queryset):
@@ -775,7 +794,37 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
         wb.save(response)
         
         return response
+
+
+    @admin.action(description="ساخت اسنپ‌شات قرارداد برای موارد انتخاب شده")
+    def generate_snapshots(self, request, queryset):
+        if (request.user.is_superuser != True) :
+            self.message_user(request, "شما دسترسی لازم برای انجام این کار را ندارید.", level='error')
+            return
+        updated_count = 0
+        skipped_count = 0
+
+        target_queryset = queryset.filter(
+            plan__isnull=False, 
+            modem__isnull=False,
+            sip_phone__isnull=False,
+        )
+
+        for obj in target_queryset:
+            try:
+                obj.contract_snapshot = obj.generate_contract_snapshot()
+                obj.save(update_fields=['contract_snapshot'])
+                updated_count += 1
+            except Exception as e:
+                print(e)
         
+        skipped_count = queryset.count() - updated_count
+
+        if updated_count > 0:
+            self.message_user(request, f"{updated_count} اسنپ‌شات قرارداد با موفقیت ساخته شد.", messages.SUCCESS)
+        if skipped_count > 0:
+            self.message_user(request, f"{skipped_count} مورد نادیده گرفته شد (احتمالاً از قبل اسنپ‌شات داشتند یا اطلاعات ناقص بود).", messages.WARNING)
+
 @admin.register(ActiveLocations,site=super_admin_site)
 class ActiveLocationsAdmin(admin.ModelAdmin):
     list_display = ("name","area_limit","is_active")

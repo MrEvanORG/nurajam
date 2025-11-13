@@ -13,6 +13,7 @@ urlpatterns = [
     path('register/personal_information', views.register_personal, name='register-personal'),
     path('register/select_service', views.register_selectservice, name='register-service'),
     path('register/contract_drafted', views.register_contractdrafted, name='register-contract'),
+    path('admin/contract-preview/<int:request_id>/', addons.admin_contract_preview, name='admin_contract_preview'),
 
     #tracking
     path('tracking/enter_code', views.tracking_entercode, name='tracking-entercode'),

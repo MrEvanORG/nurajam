@@ -10,7 +10,7 @@ from .models import ServiceRequests
 from django.http import JsonResponse
 from django.http import HttpResponse , FileResponse , Http404
 from myapp.templatetags.custom_filters import to_jalali
-from django.shortcuts import get_object_or_404 , redirect
+from django.shortcuts import get_object_or_404 , redirect , render
 from django.views.decorators.http import require_POST
 from django.contrib.admin.views.decorators import staff_member_required
 sms_api = ghasedak_sms.Ghasedak(api_key='e43935da3357ec792ac9bad1226b9ac6ae71ae59dbd6c0f3292dc1ddf909b94ayXcdVcWrLHmZmpfb')
@@ -89,6 +89,8 @@ def create_form(request,kind,pk):
         "zone":obj.odc_index or "",
         "marketer":'' if not obj.marketer_name else obj.marketer_name.get_full_name(),
         "date":to_jalali(obj.request_time),
+        "prep":'⬤' if obj.plan.plan_type == "prepayment" else '◯',
+        "postp":'⬤' if obj.plan.plan_type == "postpayment" else '◯',
     }
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     TEMPLATE_PATH = os.path.join(BASE_DIR,"dock-form","template.docx")
@@ -220,6 +222,24 @@ def register_sendotp(request):
     response.set_cookie('otp_cooldown_timestamp', str(now), max_age=OTP_COOLDOWN_SECONDS, httponly=True, samesite='Strict')
     
     return response
+
+@staff_member_required # فقط ادمین‌ها دسترسی داشته باشند
+def admin_contract_preview(request, request_id):
+    service_request = get_object_or_404(ServiceRequests, id=request_id)
+    
+    # اگر اسنپ‌شات وجود نداشت (برای رکوردهای قدیمی)، هندل کنید
+    if not service_request.contract_snapshot:
+        return render(request, 'admin/contract_preview.html', {
+            'error': 'برای این درخواست فاکتور ذخیره شده‌ای یافت نشد (رکورد قدیمی است).'
+        })
+
+    context = {
+        'data': service_request.contract_snapshot,
+        'tracking_code': service_request.tracking_code,
+        'created_at': service_request.request_time,
+        # اگر فیلتر خاصی نیاز دارید اینجا پاس دهید
+    }
+    return render(request, 'admin/contract_preview.html', context)
 
 def get_ip(request):
 

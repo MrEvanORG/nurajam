@@ -152,7 +152,13 @@ class ActiveModems(models.Model):
         return f"{self.name} {self.get_payment_method_display()}"
 
 class ActivePlans(models.Model):
+
+    class PlanTypeChoices(models.TextChoices):
+        prepayment = "prepayment","پیش پرداخت"
+        postpayment = "postpayment","پس پرداخت"
+
     data = models.IntegerField(verbose_name="حجم ماهانه (گیگابایت)")
+    plan_type = models.CharField(choices=PlanTypeChoices,max_length=50,default=PlanTypeChoices.postpayment,verbose_name='نوع طرح')
     price = models.BigIntegerField(verbose_name="قیمت (تومان)")
     is_active = models.BooleanField('وضعیت نمایش',default=True)
 
@@ -161,7 +167,7 @@ class ActivePlans(models.Model):
         verbose_name_plural = "طرح های اینترنت"
 
     def __str__(self):
-        return f"{self.data}G ماهانه - {self.price} تومان"
+        return f"{self.data}G ماهانه - {self.price} تومان - {self.get_plan_type_display()}"
 
 def get_safe_upload_path(instance, filename):
     ext = filename.split('.')[-1].lower()
@@ -240,6 +246,7 @@ class ServiceRequests(models.Model):
     sip_phone = models.BooleanField(verbose_name='متقاضی سیپ فون روی فیبرنوری',null=True)
     modem = models.ForeignKey(ActiveModems,on_delete=models.PROTECT,verbose_name='مودم درخواستی',null=True)
     plan = models.ForeignKey(ActivePlans,on_delete=models.PROTECT,verbose_name='طرح درخواستی',null=True)
+    contract_snapshot = models.JSONField(verbose_name='جزئیات قرارداد در لحظه ثبت',null=True,blank=True,help_text="ذخیره قیمت‌ها، نام طرح و مودم و محاسبات در زمان ثبت درخواست")
     #-----------------------------------------------------
     #drop status
     outdoor_area = models.PositiveIntegerField(verbose_name='متراژ بیرونی (متر)',null=True,blank=True)
@@ -281,6 +288,110 @@ class ServiceRequests(models.Model):
     request_time = models.DateTimeField(auto_now_add=True,null=True,blank=True,verbose_name='تاریخ درخواست')
     ip_address = models.GenericIPAddressField(null=True,blank=True,verbose_name='آیپی درخواست دهنده')
 
+    def generate_contract_snapshot(self):
+        import decimal
+        from myapp.templatetags.custom_filters import to_jalali_persian
+        from django.utils import timezone
+        """
+        این متد بر اساس طرح و مودم انتخاب شده، یک دیکشنری کامل شامل تمام هزینه‌ها
+        می‌سازد تا در دیتابیس ذخیره شود. (نسخه کامل و اصلاح شده)
+        """
+        if not self.plan or not self.modem:
+            return None
+
+        # 1. دریافت هزینه‌های پایه از OtherInfo
+        try:
+            config = OtherInfo.get_instance()
+            # استفاده از Decimal برای دقت مالی
+            drop_cost = decimal.Decimal(config.drop_cost)
+            sip_cost = decimal.Decimal(config.sip_phone_cost)
+        except OtherInfo.DoesNotExist:
+            drop_cost = decimal.Decimal(0)
+            sip_cost = decimal.Decimal(0)
+        
+        # 2. دریافت مقادیر از مدل‌های لینک شده
+        modem_price = decimal.Decimal(self.modem.price)
+        modem_tax = decimal.Decimal(self.modem.added_tax if hasattr(self.modem, 'added_tax') else 0)
+        modem_payment_method = self.modem.payment_method
+        
+        plan_price = decimal.Decimal(self.plan.price)
+        plan_type = self.plan.plan_type
+        
+        # 3. محاسبه N (تعداد ماه‌های قرارداد)
+        n_months = 3  # پیش‌فرض
+        if modem_payment_method == 'mi6':
+            n_months = 6
+        elif modem_payment_method == 'mi12':
+            n_months = 12
+            
+        # 4. شروع محاسبات دقیق (بر اساس منطق نهایی JS)
+
+        # 4.1. پرداخت نقدی (دراپ + سیپ + مودم نقدی)
+        cash_payment_upfront = drop_cost + (sip_cost if self.sip_phone else decimal.Decimal(0))
+        if modem_payment_method == 'cash':
+            cash_payment_upfront += modem_price
+
+        # 4.2. قسط مودم (فقط برای اقساطی)
+        modem_installment = decimal.Decimal(0)
+        if modem_payment_method.startswith('mi'):
+            # تقسیم دقیق با Decimal
+            modem_installment = (modem_price / decimal.Decimal(n_months)).quantize(decimal.Decimal('0.01'))
+
+        # 4.3. هزینه طرح در قبض اول
+        plan_total_cost_in_first_bill = (plan_price * n_months) if plan_type == 'prepayment' else plan_price
+        
+        # 4.4. هزینه طرح در قبض‌های بعدی
+        plan_cost_in_next_bills = decimal.Decimal(0) if plan_type == 'prepayment' else plan_price
+
+        # 4.5. مبلغ نهایی اولین قبض (هزینه طرح + مالیات + قسط مودم)
+        first_bill_amount = plan_total_cost_in_first_bill + modem_tax
+        if modem_payment_method.startswith('mi'):
+            first_bill_amount += modem_installment
+            
+        # 4.6. مبلغ نهایی قبض‌های بعدی (هزینه طرح + قسط مودم)
+        next_bill_amount = plan_cost_in_next_bills + modem_installment
+
+        # 4.7. مبلغ کل قرارداد (راه ساده و مطمئن - رفع خطا)
+        # این فرمول، جمع کل هزینه‌ها در N ماه است
+        total_contract_sum = drop_cost + modem_price + modem_tax + (plan_price * n_months) + (sip_cost if self.sip_phone else decimal.Decimal(0))
+
+        # 5. ساخت دیکشنری نهایی (تبدیل Decimal به float یا str برای سازگاری JSON)
+        snapshot = {
+            "generated_at": to_jalali_persian(timezone.now()),
+            "plan": {
+                "name": str(self.plan),
+                "id": self.plan.id,
+                "base_price": float(plan_price),
+                "type": plan_type,
+                "type_display": self.plan.get_plan_type_display(),
+                "data_volume": self.plan.data
+            },
+            "modem": {
+                "name": self.modem.name,
+                "id": self.modem.id,
+                "base_price": float(modem_price),
+                "tax": float(modem_tax),
+                "payment_method": modem_payment_method,
+                "payment_method_display": self.modem.get_payment_method_display()
+            },
+            "costs": {
+                "drop_cost": float(drop_cost),
+                "sip_cost": float(sip_cost) if self.sip_phone else 0,
+            },
+            # این بخش کل محاسبات را برای بازسازی فاکتور ذخیره می‌کند
+            "calculations": {
+                "duration_months": n_months,
+                "cash_payment_upfront": float(cash_payment_upfront),
+                "first_bill_amount": float(first_bill_amount),
+                "next_bill_amount": float(next_bill_amount), # برای N-1 قبض بعدی
+                "plan_total_cost": float(plan_price * n_months), # کل هزینه اینترنت در N ماه
+                "plan_total_cost_in_first_bill": float(plan_total_cost_in_first_bill), # هزینه اینترنت در قبض اول
+                "modem_installment": float(modem_installment), # مبلغ قسط ماهانه مودم
+                "total_contract_sum": float(total_contract_sum) # جمع کل واقعی
+            }
+        }
+        return snapshot
+
     def clean(self):
         super().clean()
         if self.tracking_code:
@@ -317,8 +428,6 @@ class ServiceRequests(models.Model):
             if not self.tracking_payment or not self.payment_date or not self.payment_time or not self.account_number :
                 raise ValidationError("وارد کردن جزییات پرداخت الزامی است : شماره حساب - شماره پیگیری - تاریخ - زمان")
             
-
-
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}"
 
