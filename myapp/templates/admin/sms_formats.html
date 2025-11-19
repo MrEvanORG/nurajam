@@ -1,0 +1,24 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+{% block title %}ارسال پیامک برای کاربر{% endblock %}
+{% block header %}
+<header id="header">
+<div id="branding">
+    <div id="site-name">
+        <a href="{% url 'admin:index' %}">پنل پیامکی سایت نوراجم</a>
+    </div>
+</div>
+</header>
+{% endblock %}
+{% block content %}
+<div id="content-main" style="margin-bottom:20px;">
+        <h1>ارسال پیامک برای {{service}}</h1>
+        <p>لطفا نوع پیامک ارسالی برای کاربر را انتخاب کنید</p>
+        <ul>
+            <li style="margin-top:20px;"><a class="button" href="{% url 'send_user_message_type' service.id 'tracking' %}">ارسال کد پیگیری</a></li>
+            <li style="margin-top:20px;"><a class="button" href="{% url 'send_user_message_type' service.id 'cash' %}">ارسال پیامک واریز</a></li>
+            <li style="margin-top:20px;"><a class="button" href="{% url 'send_user_message_type' service.id 'custom' %}">ارسال پیامک سفارشی</a></li>
+        </ul>
+    </div>
+    <a class="button" href="{% url 'admin:myapp_servicerequests_change' service.pk %}" style="padding:5px 9px;margin-right:5px;">بازگشت</a>
+{% endblock %}

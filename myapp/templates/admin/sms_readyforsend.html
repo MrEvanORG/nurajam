@@ -1,0 +1,50 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+{% block title %}ارسال پیامک {{type}} برای کاربر{% endblock %}
+{% block header %}
+<header id="header">
+<div id="branding">
+    <div id="site-name">
+        <a href="{% url 'admin:index' %}">پنل پیامکی سایت نوراجم</a>
+    </div>
+</div>
+</header>
+{% endblock %}
+{% block content %}
+<div id="content-main">
+    <form method="post" style="line-height:27px;">
+        {% csrf_token %}
+        <p>ارسال پیامک برای {{service}} با شماره {{service.mobile_number}}</p>
+        
+        <fieldset class="module aligned" >
+            <div class="form-row">
+                {{ form.message.errors }}
+                <label for="{{ form.message.id_for_label }}">{{ form.message.label }}&nbsp;:&nbsp;</label>
+                {{ form.message }}
+                {% if form.message.help_text %}
+                <div class="help">{{ form.message.help_text|safe }}</div>
+                {% endif %}
+                {% if form.cost %}
+                <div style="margin-top:15px;">
+                {{ form.cost.errors }}
+                <label for="{{ form.cost.id_for_label }}">{{ form.cost.label }}&nbsp;:&nbsp;</label>
+                {{form.cost}}
+                </div>
+                {% endif %}
+                {% if form.card_number %}
+                <div style="margin-top:15px;">
+                {{form.card_number.errors}}
+                <label for="{{ form.card_number.id_for_label }}">{{ form.card_number.label }}&nbsp;:&nbsp;</label>
+                {{form.card_number}}
+                </div>
+                {% endif %}
+            </div>
+        </fieldset>
+
+        <a class="button" href="{% url 'send_user_message' service.pk %}" style="padding:6px 14px;">بازگشت</a>
+        <div class="submit-row" style="margin-top:30px;">
+            <input type="submit" value="ارسال پیامک" class="default">
+        </div>
+    </form>
+</div>
+{% endblock %}

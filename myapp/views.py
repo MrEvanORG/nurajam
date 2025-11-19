@@ -1,5 +1,6 @@
 import json
 import datetime
+from threading import Thread
 from .addons import *
 from django.urls import reverse
 from django.contrib import messages
@@ -12,7 +13,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from myapp.templatetags.custom_filters import to_jalali_persian
 from django.contrib.admin.views.decorators import staff_member_required
 from .models import ActiveModems , ActivePlans, ActiveLocations , OtherInfo , ServiceRequests
-from .forms import SmsForm , RegiterphonePostForm , OtpVerifyForm , PersonalInfoForm , ServiceInfoForm ,TrackingCodeForm
+from .forms import SmsForm , RegiterphonePostForm , OtpVerifyForm , PersonalInfoForm , ServiceInfoForm ,TrackingCodeForm , SmsUserForm
 #-------------------------------------------#
 
 def generate_tracking_code():
@@ -101,7 +102,7 @@ def register_personal(request):
     if (not session) or (not is_verified) or (not is_verified == True):
         return redirect(register_verifyphonenumber)
 
-    from .addons import get_ip , generate_tracking_code , send_system_to_user_message
+    from .addons import get_ip , generate_tracking_code 
 
     initial_data = {
         'mobile': session.get('phone_number', '09123456789'),
@@ -192,21 +193,26 @@ def register_selectservice(request):
     dbj = ServiceInfoForm()
 
     plans_data_for_js = {
-        p.pk: {'name': p.__str__(), 'price': p.price,'plan_type': p.plan_type}
-        for p in dbj.PLAN_SORTED
-    }
-
-    
-    modems_data_for_js = {
-        m.pk: {
-            'name': m.name,
-            'price': m.price,
-            'payment_method': m.payment_method,
-            'payment_display': m.get_payment_method_display(),
-            'tax':m.added_tax,
+            p.pk: {
+                'name': p.__str__(),
+                'price': p.price,
+                'plan_type': p.plan_type,
+                'plan_time': p.plan_time,  # این فیلد حیاتی است (mo3, mo6, ...)
+                'plan_time_display': p.get_plan_time_display() # برای نمایش متن
+            }
+            for p in dbj.PLAN_SORTED
         }
-        for m in dbj.MODEMS_SORTED
-    }
+
+    modems_data_for_js = {
+            m.pk: {
+                'name': m.name,
+                'price': m.price,
+                'payment_method': m.payment_method,
+                'payment_display': m.get_payment_method_display(),
+                'tax': m.added_tax,
+            }
+            for m in dbj.MODEMS_SORTED
+        }
 
     try:
         from .models import OtherInfo
@@ -244,16 +250,17 @@ def register_selectservice(request):
             rq.plan = plan
             rq.modem = modem
             rq.finished_request = True
-            contract_data = rq.generate_contract_snapshot()     
-            rq.contract_snapshot = contract_data
 
-            rq.save(update_fields=['sip_phone','modem','plan','finished_request','contract_snapshot'])
-            from .addons import send_system_to_user_message
-            sms_result = send_system_to_user_message(phone=initial_data.get('mobile'),message=f'کاربر گرامی ثبت نام سرویس شما با موفقیت انجام شد\nکد پیگیری سرویس شما : {rq.tracking_code}\nلغو11')
+            rq.save(update_fields=['sip_phone','modem','plan','finished_request'])
+            from .addons import send_tracking_code_to_user
+            sms_result = send_tracking_code_to_user(phone=initial_data.get('mobile'),code=rq.tracking_code)
             from django.utils import timezone
-            sms_log = f'ارسال پیامک وضعیت | { to_jalali_persian(timezone.now())} | {sms_result}'
+            sms_log = f'پیامک کد پیگیری | { to_jalali_persian(timezone.now())} | {sms_result} | توسط سیستم'
             rq.add_sms_log(sms_log)
             rq.save()
+            from .addons import notif_new_user
+            Thread(target=notif_new_user,args=(f"اطلاع رسانی : ثبت نام کاربر جدید روی سایت نوراجم  ، {rq.__str__()}\nلغو11",)).start()
+
             session.update({
                 "service_registered":True,
                 "tracking_code":rq.tracking_code,
@@ -363,7 +370,6 @@ def tracking_result(request):
     del request.session['trackingcode']
     return render(request,'tracking_result.html',context=context)
 
-
 @staff_member_required
 def send_sms_page_view(request):
     user_ids = request.session.get('selected_user_ids_for_sms')
@@ -444,8 +450,150 @@ def send_sms_page_view(request):
         'form': form,
     }
     return render(request, 'admin/send_sms_form.html', context)
+
 @staff_member_required
-def send_sms_page_view_user(request):
-    pass
+def send_sms_user(request,pk):
+    if getattr(request.user, "role_marketer", False) == False and not request.user.is_superuser :
+        print(getattr(request.user, "role_marketer", False))
+        print(request.user.is_superuser)
+        messages.error(request,"شما دسترسی برای ارسال پیامک ندارید")
+        return redirect(reverse("admin:index"))
+    
+    service = get_object_or_404(ServiceRequests,pk=pk)
+    context = {"service":service}
+    return render(request, 'admin/sms_formats.html', context)
+
+@staff_member_required
+def send_sms_user_type(request,pk,type):
+    if getattr(request.user, "role_marketer", False) == False and not request.user.is_superuser :
+        messages.error(request,"شما دسترسی برای ارسال پیامک ندارید")
+        return redirect(reverse("admin:index"))
+    print(type)
+    if not type in ["cash","tracking","custom","endservice"]:
+        messages.error(request,"نوع وارد شده نامعتبر است")
+        return redirect(send_sms_user,pk=pk)
+    
+    converted_type = ""
+    if type == "cash":
+        converted_type = "واریز وجه"
+    
+    elif type == "tracking":
+        converted_type = "کد پیگیری"
+    
+
+    elif type == "custom":
+        converted_type = "سفارشی"
+
+    form = SmsUserForm(data=request.POST,extra_value=type)
+    if request.method == "POST":
+        if form.is_valid():
+            request.session["message_info"] = {
+                "pk":pk,
+                "type":type,
+                "card_number":form.cleaned_data.get("card_number",None),
+                "cost":form.cleaned_data.get("cost",None),
+                "text":form.cleaned_data.get("message",None),
+            }
+            return redirect(send_sms_user_sending)
+        
+
+    service = get_object_or_404(ServiceRequests,pk=pk)
+    context = {"service":service,"type":converted_type,"form":form,"title":f"ارسال پیامک {converted_type}"}
+    return render(request, 'admin/sms_readyforsend.html', context)
+
+@staff_member_required
+def send_sms_user_sending(request):
+    session = request.session.get('message_info',None)
+    if not session :
+        return redirect(reverse("admin:myapp_servicerequests"))
+    import ghasedak_sms
+    sms_api = ghasedak_sms.Ghasedak(api_key='e43935da3357ec792ac9bad1226b9ac6ae71ae59dbd6c0f3292dc1ddf909b94ayXcdVcWrLHmZmpfb')
+    
+    service = get_object_or_404(ServiceRequests,pk=session.get("pk"))
+
+    type = session.get("type")
+    converted_type = ""
+    if type == "cash":
+        converted_type = "واریز وجه"
+    
+    elif type == "tracking":
+        converted_type = "کد پیگیری"
+    
+
+    elif type == "custom":
+        converted_type = "سفارشی"
+
+    if type == "cash":
+        newotpcommand = ghasedak_sms.SendOtpInput(
+            send_date=None,
+            receptors=[
+                ghasedak_sms.SendOtpReceptorDto(
+                    mobile=str(service.mobile_number),
+                )
+            ],
+            template_name='nuracash',
+            inputs=[
+                ghasedak_sms.SendOtpInput.OtpInput(param='Cost', value=str(session.get("cost"))),
+                ghasedak_sms.SendOtpInput.OtpInput(param='Number', value=str(session.get("card_number"))),
+            ],
+            udh=False
+        )
+        response = sms_api.send_otp_sms(newotpcommand)
+    elif type == "tracking":
+        if not service.tracking_code :
+            messages.error(request,f"کد پیگیری برای سرویس {service} وجود ندارد")
+            return redirect(reverse("admin:myapp_servicerequests"))
+        newotpcommand = ghasedak_sms.SendOtpInput(
+            send_date=None,
+            receptors=[
+                ghasedak_sms.SendOtpReceptorDto(
+                    mobile=str(service.mobile_number),
+                )
+            ],
+            template_name='nuratracking',
+            inputs=[
+                ghasedak_sms.SendOtpInput.OtpInput(param='Code', value=str(service.tracking_code)),
+            ],
+            udh=False
+        )
+        response = sms_api.send_otp_sms(newotpcommand)
+    elif type == "custom":
+        try:
+            number = (OtherInfo.objects.get(id=1)).site_linenumber
+        except:
+            messages.error(request,'لاین نامبر سایت در سایر اطلاعات وارد نشده است')
+            return HttpResponseRedirect(reverse('admin:myapp_servicerequests'))
+
+        response = sms_api.send_single_sms(
+            ghasedak_sms.SendSingleSmsInput(
+                message=session.get("text"),
+                receptor=str(service.mobile_number),
+                line_number=number,
+            )
+        )
+    else:
+        return HttpResponse("invalid type")
+    print(response)
+    result = {
+        "status" : "موفق" if response.get('isSuccess') else "ناموفق", # type: ignore
+        "reason" :  response.get('message', 'خطای نامشخص'), # type: ignore
+        "sms_type" : f"پیامک {converted_type}", # type: ignore
+    }
+
+    context = {
+        "service":service,
+        "name":service.get_full_name(),
+        "result":result,
+        "title":f"گزارش ارسال پیامک {converted_type}"
+    }
+    from django.utils import timezone
+    sms_log = f'پیامک {converted_type} | { to_jalali_persian(timezone.now())} | {result["reason"]} | توسط {request.user.get_full_name()}'
+    service.add_sms_log(sms_log)
+    service.save()
+    return render(request,"admin/user_sms_results.html",context=context)
+    
+
+
+    
 
 

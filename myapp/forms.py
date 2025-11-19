@@ -13,8 +13,39 @@ class SmsForm(forms.Form):
     message = forms.CharField(
         widget=forms.Textarea(attrs={'rows': 6, 'cols': 80}),
         label='متن پیامک',
+        initial="sghl",
         help_text='می‌توانید از متغیرهایی مانند {user.first_name}, {user.last_name}, {user.username} در متن پیام استفاده کنید.'
     )
+ 
+class SmsUserForm(forms.Form):
+     message = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 6, 'cols': 80}),
+        label='متن پیامک',
+    )   
+     def __init__(self,*args,**kwargs):
+        extra_value = kwargs.pop("extra_value",None)
+        super().__init__(*args,**kwargs)
+        if extra_value :
+            if extra_value == "custom":
+                self.fields["message"].help_text = "درج عبارت لغو 11 انتهای پیام الزامی است."
+            elif extra_value == "tracking":
+                self.fields["message"].disabled = True
+                self.fields["message"].help_text = "متن پیامک غیرقابل تغییر خواهد بود ، برای ارسال پیامک دلخواه از گزینه ارسال پیامک سفارشی استفاده کنید"
+                self.fields["message"].initial = """ثبت نام‌ سرویس شما با موفقیت در وبسایت nurajam.ir انجام شد 
+                ضمنا کد پیگیری سرویستان %Code% میباشد .
+                لغو ۱۱"""
+            elif extra_value == "cash":
+                self.fields["message"].disabled = True
+                self.fields["message"].help_text = "متن پیامک غیرقابل تغییر خواهد بود ، برای ارسال پیامک دلخواه از گزینه ارسال پیامک سفارشی استفاده کنید"
+                self.fields["message"].initial = """مشترک گرامی بخشی از مراحل نصب و راه اندازی سرویس فیبرنوری شما توسط شرکت نوراجم انجام شده است برای اتمام نصب سرویس لازم است مبلغ : %Cost% تومان را به شماره کارت :  %Number% واریز نمایید ، از توجه شما سپاس گزاریم . \nلغو 11"""  
+                self.fields["cost"] = forms.IntegerField(label="مبلغ",required=True)
+                # self.fields["cost"].widget = 
+                self.fields["card_number"] = forms.IntegerField(label="شماره کارت",required=True)
+            
+
+
+
+
 class RegiterphonePostForm(forms.Form):
     mobile = forms.CharField(max_length=11, label='شماره تلفن همراه', required=True)
     post_code = forms.CharField(max_length=10, label='کد پستی', required=True)

@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-    // 1. گرفتن المان‌های لازم از صفحه
+    // 1. گرفتن المان‌های لازم
     const modemSelect = document.getElementById('modem-select');
     const planSelect = document.getElementById('plan-select');
     const sipRadios = document.querySelectorAll('input[name="sipstatus"]');
@@ -8,26 +8,29 @@ document.addEventListener('DOMContentLoaded', function () {
     const rulesCheckbox = document.getElementById('rules');
     const submitButton = document.getElementById('submit-button');
 
-    // 2. خواندن داده‌های اولیه از تمپلیت
+    // المان‌های جدید نمایشی
+    const contractDurationRow = document.getElementById('contract-duration-row');
+    const contractDurationText = document.getElementById('contract-duration-text');
+
+    // 2. داده‌های اولیه
     const costDataDiv = document.getElementById('cost-data');
     const DROP_COST = parseFloat(costDataDiv.dataset.dropCost);
     const SIP_COST = parseFloat(costDataDiv.dataset.sipCost);
     const modemsData = JSON.parse(document.getElementById('modems-data').textContent);
     const plansData = JSON.parse(document.getElementById('plans-data').textContent);
 
-    // 3. گرفتن سلول‌های جدول خدمات
+    // 3. و 4. گرفتن سلول‌های جدول (مشابه قبل)
     const modemNameCell = document.getElementById('modem-name');
     const modemPaymentCell = document.getElementById('modem-payment-type');
     const modemCostCell = document.getElementById('modem-cost');
     const planNameCell = document.getElementById('plan-name');
-    const planPaymentTypeCell = document.querySelector('#plan-name + td'); // سلول نوع پرداخت طرح
+    const planPaymentTypeCell = document.querySelector('#plan-name + td');
     const planCostCell = document.getElementById('plan-cost');
     const sipRow = document.getElementById('sip-phone-row');
     const sipCostCell = document.getElementById('sip-cost');
     const modemTaxRow = document.getElementById('modem-tax-row');
     const modemTaxCostCell = document.getElementById('modem-tax-cost');
 
-    // 4. گرفتن ردیف‌ها و سلول‌های جدول خلاصه پرداخت
     const cashPaymentRow = document.getElementById('cash-payment-row');
     const cashPaymentCostCell = document.getElementById('cash-payment-cost');
     const firstPaymentRow = document.getElementById('first-payment-row');
@@ -39,13 +42,77 @@ document.addEventListener('DOMContentLoaded', function () {
     const totalContractLabelCell = document.getElementById('total-contract-label');
     const totalContractCostCell = document.getElementById('total-contract-cost');
 
-    // تابع برای فرمت کردن اعداد
     const formatCurrency = (num) => {
         return new Intl.NumberFormat('en-US').format(Math.round(num)) + ' تومان';
     };
 
-    // تابع اصلی برای محاسبه و بروزرسانی هزینه‌ها
-// تابع اصلی برای محاسبه و بروزرسانی هزینه‌ها
+    // مپ کردن کد زمان طرح به عدد ماه
+    const planTimeMapping = {
+        'mo3': 3,
+        'mo6': 6,
+        'mo9': 9,
+        'mo12': 12
+    };
+
+    // --- تابع جدید: فیلتر کردن طرح‌ها بر اساس مودم ---
+    function filterPlansByModem() {
+        const selectedModemId = modemSelect.value;
+        if (!selectedModemId) return;
+
+        const selectedModem = modemsData[selectedModemId];
+        const paymentMethod = selectedModem.payment_method;
+
+        // تعیین پسوند مجاز (مثلا mi6 باید mo6 را نشان دهد)
+        let allowedSuffix = null; // null یعنی همه طرح‌ها مجاز است
+
+        if (paymentMethod === 'mi3') allowedSuffix = 'mo3';
+        else if (paymentMethod === 'mi6') allowedSuffix = 'mo6';
+        else if (paymentMethod === 'mi9') allowedSuffix = 'mo9';
+        else if (paymentMethod === 'mi12') allowedSuffix = 'mo12';
+        // برای cash و nocashneed مقدار allowedSuffix همان null می ماند
+
+        const options = planSelect.options;
+        let currentPlanValid = false;
+
+        for (let i = 0; i < options.length; i++) {
+            const opt = options[i];
+            const planId = opt.value;
+
+            // گزینه "انتخاب کنید" را رد میکنیم
+            if (!planId) continue; 
+
+            const plan = plansData[planId];
+            
+            // منطق فیلتر
+            if (allowedSuffix && plan.plan_time !== allowedSuffix) {
+                // اگر محدودیت داریم و این طرح نمیخورد -> مخفی کن
+                opt.hidden = true;
+                opt.disabled = true; // برای اطمینان بیشتر در برخی مرورگرها
+                opt.style.display = 'none';
+            } else {
+                // نمایش بده
+                opt.hidden = false;
+                opt.disabled = false;
+                opt.style.display = 'block';
+            }
+
+            // بررسی اینکه آیا طرحی که الان انتخاب شده هنوز معتبر است؟
+            if (planSelect.value === planId && !opt.disabled) {
+                currentPlanValid = true;
+            }
+        }
+
+        // اگر طرح انتخاب شده فعلی با مودم جدید سازگار نیست، انتخاب را ریست کن
+        if (planSelect.value && !currentPlanValid) {
+            planSelect.value = "";
+            // چون طرح ریست شد، محاسبات را مخفی کن تا کاربر دوباره طرح بزند
+            costDetailsDiv.style.display = 'none';
+            rulesSection.style.display = 'none';
+            submitButton.disabled = true;
+        }
+    }
+
+    // --- تابع اصلی محاسبه هزینه ---
     function updateCosts() {
         const selectedModemId = modemSelect.value;
         const selectedPlanId = planSelect.value;
@@ -58,81 +125,84 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
+        // نمایش بخش ها
         costDetailsDiv.style.display = 'block';
         rulesSection.style.display = 'block';
 
         const selectedModem = modemsData[selectedModemId];
         const selectedPlan = plansData[selectedPlanId];
+        
         const modemPrice = parseFloat(selectedModem.price);
         const modemTax = parseFloat(selectedModem.tax) || 0;
+        const modemPaymentMethod = selectedModem.payment_method;
+        
         const planPrice = parseFloat(selectedPlan.price);
         const planType = selectedPlan.plan_type; 
-        const modemPaymentMethod = selectedModem.payment_method;
+        // **تغییر مهم**: گرفتن مدت قرارداد از روی طرح، نه مودم
+        const planTimeCode = selectedPlan.plan_time; // مثلا mo6
+        const N_MONTHS = planTimeMapping[planTimeCode] || 3; // پیش فرض 3
 
-        // --- شروع محاسبات ---
+        // نمایش مدت قرارداد در جدول
+        contractDurationRow.style.display = 'table-row';
+        contractDurationText.innerHTML = `${selectedPlan.plan_time_display} <span style="font-size:0.85em; font-weight:normal; display:block; margin-top:5px; color:#666;">(پس از پایان این مدت، نیاز به تمدید سرویس اینترنت می‌باشد)</span>`;
 
-        // 1. تعیین مدت قرارداد (N ماه)
-        let N_MONTHS = 3; // پیش‌فرض
-        if (modemPaymentMethod === 'mi6') N_MONTHS = 6;
-        else if (modemPaymentMethod === 'mi12') N_MONTHS = 12;
+        // --- محاسبات مالی ---
 
-        // 2. محاسبه پرداختی نقدی (Upfront)
-        // شروع با هزینه دراپ و سیپ‌فون
+        // 1. محاسبه پرداختی نقدی (Upfront)
         let cashPayment = DROP_COST + (sipRequested ? SIP_COST : 0);
 
-        // *** تغییر جدید: اگر مودم نقدی است، به پرداخت نقدی اضافه شود ***
+        // اگر مودم نقدی است
         if (modemPaymentMethod === 'cash') {
             cashPayment += modemPrice;
         }
 
-        // 3. محاسبه اقساط مودم
+        // 2. محاسبه اقساط مودم
         let modemInstallment = 0;
         if (modemPaymentMethod.startsWith('mi')) {
+            // نکته: اینجا چون فیلتر کردیم، N_MONTHS برابر مدت قسط مودم هم هست
+            // اما برای اطمینان ریاضی از تقسیم قیمت بر مدت قرارداد استفاده میکنیم
             modemInstallment = modemPrice / N_MONTHS;
         }
 
-        // 4. محاسبه هزینه طرح (پیش‌پرداخت یا پس‌پرداخت)
+        // 3. هزینه طرح
         let planPaymentInFirstBill = 0;
         let planPaymentInNextBills = 0;
 
         if (planType === 'prepayment') {
-            planPaymentInFirstBill = planPrice * N_MONTHS;
+            // پیش پرداخت: کل پول n ماه در قبض اول
+            planPaymentInFirstBill = planPrice * N_MONTHS; // قیمت طرح در دیتابیس ماهانه است یا کلی؟ 
+            // فرضیه کد قبلی شما: price * N_MONTHS بود. یعنی price قیمت ماهیانه است.
+            // اگر price در مدل ActivePlans قیمت کل پکیج است، ضرب در N_MONTHS را بردارید.
+            // طبق عرف ISP ها معمولا قیمت کل طرح را میزنند. اما من طبق کد قبلی شما (price * N) رفتم.
             planPaymentInNextBills = 0;
-        } else { // postpayment
+        } else { 
+            // پس پرداخت: ماه به ماه
             planPaymentInFirstBill = planPrice;
             planPaymentInNextBills = planPrice;
         }
 
-        // 5. محاسبه اولین قبض
-        // شامل: هزینه طرح + مالیات مودم (اگر باشد) + قسط مودم (اگر قسطی باشد)
+        // 4. اولین قبض
         let firstPayment = planPaymentInFirstBill + modemTax;
-        
         if (modemPaymentMethod.startsWith('mi')) {
             firstPayment += modemInstallment;
         }
-        // نکته: دیگر شرطی برای اضافه کردن modemPrice در حالت cash اینجا نداریم (چون رفت در cashPayment)
 
-        // 6. محاسبه قبض‌های بعدی
+        // 5. قبض های بعدی
         let nextPayment = planPaymentInNextBills + modemInstallment;
 
-        // 7. مجموع کل قرارداد
+        // 6. مجموع کل
         let totalContractPayment = DROP_COST + modemPrice + modemTax + (planPrice * N_MONTHS) + (sipRequested ? SIP_COST : 0);
 
-
-        // --- بروزرسانی مقادیر در جدول‌ها ---
-
-        // جدول اول: لیست خدمات
+        // --- بروزرسانی جدول ---
         modemNameCell.textContent = selectedModem.name;
         
-        // تغییر متن نوع پرداخت مودم در جدول
         if (modemPaymentMethod === 'cash') {
-            modemPaymentCell.textContent = selectedModem.payment_display; // مثلا "نقدی"
+            modemPaymentCell.textContent = selectedModem.payment_display;
         } else {
             modemPaymentCell.textContent = selectedModem.payment_display + ' (روی قبض)';
         }
         
         modemCostCell.textContent = formatCurrency(modemPrice);
-        
         planNameCell.textContent = selectedPlan.name;
 
         if (planType === 'prepayment') {
@@ -146,20 +216,18 @@ document.addEventListener('DOMContentLoaded', function () {
         sipRow.style.display = sipRequested ? 'table-row' : 'none';
         sipCostCell.textContent = formatCurrency(SIP_COST);
 
-
-        // جدول دوم: خلاصه پرداخت
+        // جدول دوم: خلاصه
         if (modemTax > 0) {
-            // **حالت با مالیات**
             modemTaxRow.style.display = 'table-row';
             modemTaxCostCell.textContent = formatCurrency(modemTax);
             
             cashPaymentRow.style.display = 'table-row';
             firstPaymentRow.style.display = 'table-row';
-            // اگر فقط 1 ماه باشد، پرداخت بعدی نداریم
+            
             nextPaymentsRow.style.display = N_MONTHS > 1 ? 'table-row' : 'none';
             
             cashPaymentCostCell.textContent = formatCurrency(cashPayment);
-            firstPaymentLabelCell.textContent = 'اولین پرداخت قبض (به همراه مالیات بر ارزش افزوده مودم)';
+            firstPaymentLabelCell.textContent = 'اولین پرداخت قبض (به همراه مالیات مودم)';
             firstPaymentCostCell.textContent = formatCurrency(firstPayment);
             
             if (N_MONTHS > 1) {
@@ -168,39 +236,28 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
         } else {
-            // **حالت بدون مالیات**
+            // حالت بدون مالیات
             modemTaxRow.style.display = 'none';
             cashPaymentRow.style.display = 'table-row';
             cashPaymentCostCell.textContent = formatCurrency(cashPayment);
 
-            // بررسی تفاوت اولین قبض و قبض‌های بعدی
-            // (مثلاً در حالت طرح پیش‌پرداخت، اولین قبض خیلی بیشتر از بعدی‌هاست)
             const roundedFirst = Math.round(firstPayment);
             const roundedNext = Math.round(nextPayment);
 
             if (roundedFirst === roundedNext) {
-                // هزینه‌ها یکسان است (طرح پس‌پرداخت + مودم قسطی یا بدون مودم)
                 firstPaymentRow.style.display = 'none';
                 nextPaymentsRow.style.display = 'table-row';
                 nextPaymentsLabelCell.textContent = `${N_MONTHS} پرداخت قبض`;
                 nextPaymentsCostCell.textContent = formatCurrency(nextPayment);
             } else {
-                // هزینه‌ها متفاوت است (طرح پیش‌پرداخت)
                 firstPaymentRow.style.display = 'table-row';
                 firstPaymentLabelCell.textContent = 'اولین پرداخت قبض';
                 firstPaymentCostCell.textContent = formatCurrency(firstPayment);
 
-                if (N_MONTHS > 1) {
-                    // فقط اگر هزینه‌ای برای ماه‌های بعد باقی مانده باشد نشان بده
-                    // در حالت "مودم نقدی" + "طرح پیش‌پرداخت"، nextPayment صفر می‌شود.
-                    if (nextPayment > 0) {
-                        nextPaymentsRow.style.display = 'table-row';
-                        nextPaymentsLabelCell.textContent = `${N_MONTHS - 1} پرداخت بعدی قبض`;
-                        nextPaymentsCostCell.textContent = formatCurrency(nextPayment);
-                    } else {
-                        // اگر هزینه بعدی 0 است (مثلا پیش‌پرداخت کامل و مودم نقدی) مخفی کن
-                        nextPaymentsRow.style.display = 'none';
-                    }
+                if (N_MONTHS > 1 && nextPayment > 0) {
+                    nextPaymentsRow.style.display = 'table-row';
+                    nextPaymentsLabelCell.textContent = `${N_MONTHS - 1} پرداخت بعدی قبض`;
+                    nextPaymentsCostCell.textContent = formatCurrency(nextPayment);
                 } else {
                     nextPaymentsRow.style.display = 'none';
                 }
@@ -219,10 +276,16 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    modemSelect.addEventListener('change', updateCosts);
+    // ایونت لیسنر برای مودم: هم فیلتر کن هم محاسبه
+    modemSelect.addEventListener('change', function() {
+        filterPlansByModem();
+        updateCosts(); // اگر طرح انتخاب شده پریده باشد، این تابع مخفی میکند
+    });
+
     planSelect.addEventListener('change', updateCosts);
     sipRadios.forEach(radio => radio.addEventListener('change', updateCosts));
 
-    // اجرای تابع در اولین بارگذاری صفحه (برای زمانی که مقادیر اولیه از سشن آمده‌اند)
+    // اجرا هنگام لود (اگر مقادیر قبلی در فرم مانده باشد)
+    filterPlansByModem();
     updateCosts();
 });

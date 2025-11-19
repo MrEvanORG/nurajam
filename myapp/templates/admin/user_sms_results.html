@@ -1,0 +1,46 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+{% block title %}گزارش ارسال پیامک برای کاربر{% endblock %}
+{% block header %}
+<header id="header">
+<div id="branding">
+    <div id="site-name">
+        <a href="{% url 'admin:index' %}">پنل پیامکی سایت نوراجم</a>
+    </div>
+</div>
+</header>
+{% endblock %}
+{% block content %}
+<div id="content-main">
+    <div class="results">
+        <table id="result_list">
+            <thead>
+                <tr>
+                    <th>نام کاربر</th>
+                    <th>شماره تلفن</th>
+                    <th>نوع پیامک</th>
+                    <th>وضعیت</th>
+                    <th>توضیحات</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="{% cycle 'row1' 'row2' %}">
+                    <td>{{ name }}</td>
+                    <td>{{service.mobile_number}}</td>
+                    <td>{{ result.sms_ }}</td>
+                    {% if result.status == 'موفق' %}
+                        <td style="font-weight: bold; color: green;">{{ result.status }}</td>
+                    {% else %}
+                        <td style="font-weight: bold; color: red;">{{ result.status }}</td>
+                    {% endif %}
+                    <td>{{ result.reason }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="submit-row" style="margin-top:10px;">
+        <a href="{% url 'admin:myapp_servicerequests_change' service.pk %}" class="button">بازگشت به درخواست سرویس</a>
+    </div>
+</div>
+{% endblock %}

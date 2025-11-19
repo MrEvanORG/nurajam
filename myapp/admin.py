@@ -131,12 +131,12 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
 
     def contact_user(self,obj):
         try:
-            message_url = reverse('send_user_message',args=[obj.mobile_number])
+            message_url = reverse('send_user_message',args=[obj.pk])
             call_url = "tel:"+obj.mobile_number
+            return format_html(f"""<a class="button" href="{message_url}">ارسال پیامک</a>  -  <a class="button" href="{call_url}">تماس</a>""")
         except Exception as e:
             print(e)
-            message_url, call_url = "#" , "#"
-        return format_html(f"""<a class="button" href="{message_url}">ارسال پیامک</a>  -  <a class="button" href="{call_url}">تماس</a>""")
+            return "-"
     contact_user.short_description = "ارتباط با مشترک"        # type: ignore
 
     def download_form(self,obj):
@@ -149,24 +149,6 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
         return format_html(f"""<a class="button" href="{word_url}">Word دانلود</a>&nbsp; - 
                            <a class="button" href="{pdf_url}">Pdf دانلود</a>""")
     download_form.short_description = "دانلود فرم ثبت نام" # type: ignore
-
-    class Media:
-        css = {
-            'all': ('css/admin_modal.css',)
-        }
-        js = ('js/admin_modal.js',) 
-
-    def view_contract_button(self, obj):
-        if obj.contract_snapshot:
-            url = reverse('admin_contract_preview', args=[obj.id])
-            return format_html(
-                '<a class="button" href="javascript:void(0);" onclick="openContractModal(\'{}\')">📄 مشاهده قرارداد</a>',
-                url
-            )
-        return "-"
-    
-    view_contract_button.short_description = "قرارداد"
-    view_contract_button.allow_tags = True
 
     def documents_box(self, obj):
         if not obj.documents:
@@ -372,7 +354,7 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
                 'classes': ('collapse',)
             }),
             ('باکس دانلود', {
-                'fields': ('documents_box','download_form','documents','view_contract_button','marketer_name'), 
+                'fields': ('documents_box','download_form','documents','marketer_name'), 
                 'classes': ('collapse',)
             }),
             ('اطلاعات شخصی', {
@@ -795,36 +777,6 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
         
         return response
 
-
-    @admin.action(description="ساخت اسنپ‌شات قرارداد برای موارد انتخاب شده")
-    def generate_snapshots(self, request, queryset):
-        if (request.user.is_superuser != True) :
-            self.message_user(request, "شما دسترسی لازم برای انجام این کار را ندارید.", level='error')
-            return
-        updated_count = 0
-        skipped_count = 0
-
-        target_queryset = queryset.filter(
-            plan__isnull=False, 
-            modem__isnull=False,
-            sip_phone__isnull=False,
-        )
-
-        for obj in target_queryset:
-            try:
-                obj.contract_snapshot = obj.generate_contract_snapshot()
-                obj.save(update_fields=['contract_snapshot'])
-                updated_count += 1
-            except Exception as e:
-                print(e)
-        
-        skipped_count = queryset.count() - updated_count
-
-        if updated_count > 0:
-            self.message_user(request, f"{updated_count} اسنپ‌شات قرارداد با موفقیت ساخته شد.", messages.SUCCESS)
-        if skipped_count > 0:
-            self.message_user(request, f"{skipped_count} مورد نادیده گرفته شد (احتمالاً از قبل اسنپ‌شات داشتند یا اطلاعات ناقص بود).", messages.WARNING)
-
 @admin.register(ActiveLocations,site=super_admin_site)
 class ActiveLocationsAdmin(admin.ModelAdmin):
     list_display = ("name","area_limit","is_active")
@@ -859,8 +811,8 @@ class ActiveModemsAdmin(admin.ModelAdmin):
 
 @admin.register(ActivePlans,site=super_admin_site)
 class ActivePlansAdmin(admin.ModelAdmin):
-    list_display = ("data","price","is_active")
-    ordering = ("data","is_active","price")
+    list_display = ("data","plan_type","plan_time","is_active")
+    ordering = ("data","is_active")
 
     def has_view_permission(self, request, obj=None):
         return (True if request.user.is_superuser or request.user.role_marketer else False)

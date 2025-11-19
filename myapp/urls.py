@@ -22,7 +22,10 @@ urlpatterns = [
 
     path('send-sms-to-admins/', views.send_sms_page_view, name='send_sms_page'),
 
-    path('send-sms-to-user', views.send_sms_page_view_user, name='send_user_message'),
+    path('send-sms-user/<int:pk>', views.send_sms_user, name='send_user_message'),
+    path('send-sms-user/<int:pk>/type=<str:type>/', views.send_sms_user_type, name='send_user_message_type'),
+    path('send-sms-user/sending/', views.send_sms_user_sending, name='send_user_message_type'),
+
     path('create_form/<str:kind>/<int:pk>/', addons.create_form, name='create-form'),
     path('download-document/<int:pk>/',addons.download_document_view,name='download-document'),
 ]

@@ -36,17 +36,7 @@
             {% csrf_token %}
             <div class="row gtr-50 gtr-uniform">
 
-                <div class="col-6">
-                    <select name="plan" id="plan-select" class="form-select" required>
-                        <option value="">حجم اینترنت (ماهیانه)</option>
-                        {% for plan , plan_display in form.plan.field.choices %}
-                        <option value="{{plan}}" {% if form.plan.value == plan|stringformat:"s" %}selected{% endif %}>{{plan_display}}</option>
-                        {% endfor %}    
-                    </select>
-                    <span class="js-error span-error">{% if form.plan.errors %}{{ form.plan.errors.0 }}{% endif %}</span>
-                </div>
-
-                <div class="col-6 pl-0">
+                <div class="col-6 ">
                     <select name="modem" id="modem-select" class="form-select" required>
                         <option value="">مودم</option>
                         {% for modem , modem_display in form.modem.field.choices %}
@@ -56,8 +46,19 @@
                     <span class="js-error span-error">{% if form.modem.errors %}{{ form.modem.errors.0 }}{% endif %}</span>
                 </div>
 
+                <div class="col-6 pl-0">
+                    <select name="plan" id="plan-select" class="form-select" required>
+                        <option value="">حجم اینترنت (ماهیانه)</option>
+                        {% for plan , plan_display in form.plan.field.choices %}
+                        <option value="{{plan}}" {% if form.plan.value == plan|stringformat:"s" %}selected{% endif %}>{{plan_display}}</option>
+                        {% endfor %}    
+                    </select>
+                    <span class="js-error span-error">{% if form.plan.errors %}{{ form.plan.errors.0 }}{% endif %}</span>
+                </div>
+
+
                 <div class="col-12">
-                    <blockquote>کلیه ترافیک های اینترنت با فناوری FFTO و FTTH بصورت ماهیانه و بین الملل با سرعت پایه 200Mbps میباشند .</blockquote>
+                    <blockquote>کلیه ترافیک های اینترنت با فناوری FFTO و FTTH بصورت ماهیانه و بین الملل با سرعت پایه 100Mbps میباشند .</blockquote>
                 </div>
                 <div class="col-6 col-12-mobilep"><h4>تقاضای سرویس تلفن روی فیبر نوری : </h4></div>
 
@@ -92,6 +93,10 @@
                     <div class="table-wrapper">
                         <table class="alt">
                             <tbody>
+                                <tr id="contract-duration-row">
+                                    <td>مدت زمان قرارداد</td>
+                                    <td id="contract-duration-text" colspan="2" style="font-weight: bold; color: #2c3e50;"></td>
+                                </tr>
                                 <tr id="cash-payment-row">
                                     <td>پرداخت نقدی</td>
                                     <td id="cash-payment-cost"></td>

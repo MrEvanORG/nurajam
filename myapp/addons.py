@@ -16,24 +16,43 @@ from django.contrib.admin.views.decorators import staff_member_required
 sms_api = ghasedak_sms.Ghasedak(api_key='e43935da3357ec792ac9bad1226b9ac6ae71ae59dbd6c0f3292dc1ddf909b94ayXcdVcWrLHmZmpfb')
 
 
-def send_system_to_user_message(phone,message):
-    # 3000824492
+def notif_new_user(text):
+    from .models import OtherInfo
     try:
-        from .models import OtherInfo
-        config = OtherInfo.get_instance()
-        number = config.site_linenumber
-    except Exception as e:
-        return f"ارور : لاین نامبر سایت تعریف نشده است + {e}"
-
-    response = sms_api.send_single_sms(
-        ghasedak_sms.SendSingleSmsInput(
-            message=message,
-            receptor=str(phone),
-            line_number=str(number),
-            send_date='',
-            client_reference_id='',
+        number = (OtherInfo.objects.get(id=1)).site_linenumber
+    except:
+        return False
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    admin_users = User.objects.filter(register_messages=True)
+    for admin in admin_users:
+        response = sms_api.send_single_sms(
+            ghasedak_sms.SendSingleSmsInput(
+                message=text,
+                receptor=str(admin.username).strip(),
+                line_number=number,
+                send_date='',
+                client_reference_id=''
+            )
         )
+
+def send_tracking_code_to_user(phone,code):
+    # 3000824492
+
+    newotpcommand = ghasedak_sms.SendOtpInput(
+        send_date=None,
+        receptors=[
+            ghasedak_sms.SendOtpReceptorDto(
+                mobile=str(phone),
+            )
+        ],
+        template_name='nuratracking',
+        inputs=[
+            ghasedak_sms.SendOtpInput.OtpInput(param='Code', value=str(code)),
+        ],
+        udh=False
     )
+    response = sms_api.send_otp_sms(newotpcommand)
     return response['message'] # type: ignore
 
 def generate_tracking_code():
@@ -61,6 +80,7 @@ def create_form(request,kind,pk):
     # '⬤' : true
     # '◯' : false
     supported_data = [20,60,120,220]
+    supported_months = ["mo3","mo6","mo12"]
     context = {
         "name":obj.get_full_name(),
         "fname":obj.father_name or "",
@@ -73,9 +93,10 @@ def create_form(request,kind,pk):
         "cpost":obj.post_code or "",
         "owner":'⬤'if obj.house_is_owner == 'owner' else '◯',
         "renter":'⬤'if obj.house_is_owner == 'renter' else  '◯',
-        "mo3":'⬤' if obj.modem.payment_method == "mi3" else '◯',
-        "mo6":'⬤' if obj.modem.payment_method == "mi6" else '◯',
-        "mo12":'⬤' if obj.modem.payment_method == "mi12" else '◯',
+        "mo3":'⬤' if obj.plan.plan_time == "mo3" else '◯',
+        "mo6":'⬤' if obj.plan.plan_time == "mo6" else '◯',
+        "mo12":'⬤' if obj.plan.plan_time == "mo12" else '◯',
+        "mo0":f"⬤ {obj.get_plan_time_display()}" if not obj.plan.plan_time in supported_months else "", #ddd to template after
         "plan20":'⬤' if obj.plan.data == 20 else '◯',
         "plan60":'⬤' if obj.plan.data == 60 else '◯',
         "plan120":'⬤' if obj.plan.data == 120 else '◯',
