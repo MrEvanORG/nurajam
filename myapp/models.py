@@ -81,9 +81,12 @@ class OtherInfo(models.Model):
     site_linenumber = models.CharField(max_length=20,verbose_name='شماره ثابت سایت')
 
     link_phone = models.CharField(max_length=100,verbose_name='لینک تماس (فوتر)',null=True,blank=True)
+    link_prphone = models.CharField(max_length=100,verbose_name='لینک تماس تلفن ثابت (فوتر)',null=True,blank=True)
     link_mail = models.CharField(max_length=100,verbose_name='لینک ایمیل (فوتر)',null=True,blank=True)
     link_instagram = models.CharField(max_length=100,verbose_name='لینک اینستاگرام (فوتر)',null=True,blank=True)
     link_whatsapp = models.CharField(max_length=100,verbose_name='لینک واتساپ (فوتر)',null=True,blank=True)
+    link_telegram = models.CharField(max_length=100,verbose_name='لینک تلگرام (فوتر)',null=True,blank=True)
+    link_twitter = models.CharField(max_length=100,verbose_name='لینک توییتر (فوتر)',null=True,blank=True)
 
 
     def save(self,*args,**kwargs):

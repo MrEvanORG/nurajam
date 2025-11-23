@@ -72,6 +72,30 @@
 
 }
 
+footer ul li{
+	margin-bottom: 0.50em;
+}
+footer ul{
+	margin-right: 1.5em;
+}
+footer ul.newalt a{
+	border-bottom: none;
+}
+footer p{
+	margin-bottom: 1em;;
+}
+footer .box{
+	margin: 0;
+	border-radius: 6px;
+}
+footer{
+	padding-bottom:1em !important;
+}
+footer h4{
+	margin-bottom:1.5em;
+	margin-right: -0.75em;
+}
+
 .rtl-placeholder {
   direction: ltr !important;         
   text-align: left !important;       
