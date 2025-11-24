@@ -1,112 +1,125 @@
 <footer id="footer">
-    {% comment %} 
-    <ul class="icons" style="margin-top:20px;">
-        {% if link_whatsapp %}<li><a href="{{link_whatsapp}}" class="icon brands fa-whatsapp"><span class="label">whatsapp</span></a></li>{% endif %}
-        {% if link_instagram %}<li><a href="{{ link_instagram }}" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>{% endif %}
-        {% if link_mail %}<li><a href="{{ link_mail }}" class="icon solid fa-envelope"><span class="label">email</span></a></li>{% endif %}
-        {% if link_phone %}<li><a href="{{ link_phone }}" class="icon solid fa-phone-alt"><span class="label">phone</span></a></li>{% endif %}
-    </ul>
-    {% endcomment %}
     <div class="box">
         <h4 class="align-right">شرکت توسعه زیرساخت نوراجم</h4>
-    <div class="row align-right">
-        <div class="col-4 col-6-mobile col-12-mobilep text-right" >
-            <p><i class="fa fa-paper-plane" aria-hidden="true"></i> راه های ارتباطی</p>
-            <ul>
-                <li>
-                    <a>
-                        Rafsanjan , kerman &nbsp;
-                        <i class="icon solid fa-location-arrow">
-                            <span class="label">location</span>
-                        </i>
-                    </a>
-                </li>
-                {% if link_mail %}
-                <li>
-                    <a href="{{link_mail}}">
-                        {{link_mail|slice:"7:"}}&nbsp;
-                        <i class="icon solid fa-envelope">
-                            <span class="label">email</span>
-                        </i>
-                    </a>
-                </li>
-                {% endif %}
-                {% if link_phone %}
-                <li>
-                    <a href="{{link_phone}}">
-                        {{link_phone|slice:"5:"}}&nbsp;
-                        <i class="icon solid fa-phone-alt">
-                            <span class="label">phone</span>
-                        </i>
-                    </a>
-                </li>
-                {% endif %}
-                {% if link_prphone %}
-                <li>
-                    <a href="{{link_prphone}}">
-                        {{link_prphone|slice:"5:"}}&nbsp;
-                        <i class="icon solid fa-phone-square-alt">
-                            <span class="label">phone</span>
-                        </i>
-                    </a>
-                </li>
-                {% endif %}
-            </ul>        
+        <p class="align-right">پیشرو در توسعه فرایند های نوین</p>
+        
+        <div class="row align-right">
+            <!-- ستون اول: راه‌های ارتباطی -->
+            <div class="col-4 col-6-mobile col-12-mobilep text-right">
+                <h5>
+                    <i class="fa fa-paper-plane" aria-hidden="true"></i>
+                    راه های ارتباطی
+                </h5>
+                <ul>
+                    {% if link_address and address_text %}
+                    <li>
+                        <a href="{{link_address}}">
+                            {{address_text}}&nbsp;
+                            <i class="icon solid fa-location-arrow">
+                                <span class="label">location</span>
+                            </i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if link_mail %}
+                    <li>
+                        <a href="{{link_mail}}">
+                            {{link_mail|slice:"7:"}}&nbsp;
+                            <i class="icon solid fa-envelope">
+                                <span class="label">email</span>
+                            </i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if link_phone %}
+                    <li>
+                        <a href="{{link_phone}}">
+                            {{link_phone|slice:"5:"}}&nbsp;
+                            <i class="icon solid fa-phone-alt">
+                                <span class="label">phone</span>
+                            </i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if link_prphone %}
+                    <li>
+                        <a href="{{link_prphone}}">
+                            {{link_prphone|slice:"5:"}}&nbsp;
+                            <i class="icon solid fa-phone-square-alt">
+                                <span class="label">phone</span>
+                            </i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+            
+            <!-- ستون دوم: شبکه‌های اجتماعی -->
+            <div class="col-3 col-6-mobile col-12-mobilep">
+                <h5>
+                    <i class="fa fa-globe" aria-hidden="true"></i>&nbsp;
+                    ما در شبکه های اجتماعی
+                </h5>
+                <ul class="newalt">
+                    {% if link_whatsapp %}
+                    <li>
+                        <a href="{{link_whatsapp}}">
+                            <i class="icon brands fa-whatsapp">
+                                <span class="label">whatsapp</span>
+                            </i>
+                            واتساپ&nbsp;
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if link_instagram %}
+                    <li>
+                        <a href="{{link_instagram}}">
+                            <i class="icon brands fa-instagram">
+                                <span class="label">Instagram</span>
+                            </i>
+                            اینستاگرام&nbsp;
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if link_telegram %}
+                    <li>
+                        <a href="{{link_telegram}}">
+                            <i class="icon brands fa-telegram">
+                                <span class="label">telegram</span>
+                            </i>
+                            تلگرام&nbsp;
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if link_twitter %}
+                    <li>
+                        <a href="{{link_twitter}}">
+                            <i class="icon brands fa-twitter">
+                                <span class="label">twitter</span>
+                            </i>
+                            شبکه ایکس&nbsp;
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+            
+            <!-- ستون سوم: نماد اعتماد -->
+            <div class="col-5 col-12-mobile col-12-mobilep">
+                <h5>
+                    <i class="fa fa-check-circle" aria-hidden="true"></i>&nbsp;
+                    اعتماد شما سرمایه ماست
+                </h5>
+                <a referrerpolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=663640&Code=FmBZJ8LsX7kPwNZW73NiRP4dxWNx4qIG'>
+                    <img referrerpolicy='origin' src='https://trustseal.enamad.ir/logo.aspx?id=663640&Code=FmBZJ8LsX7kPwNZW73NiRP4dxWNx4qIG' alt='' style='cursor:pointer;width:75px;' code='FmBZJ8LsX7kPwNZW73NiRP4dxWNx4qIG' loading="lazy">
+                </a>
+            </div>
         </div>
-        <div class="col-3 col-6-mobile col-12-mobilep">
-            <p><i class="fa fa-globe" aria-hidden="true"></i>&nbsp;ما در شبکه های اجتماعی</p>
-            <ul class="newalt">
-                {% if link_whatsapp %}
-                <li>
-                    <a href="{{link_whatsapp}}">
-                        <i class="icon brands fa-whatsapp">
-                            <span class="label">whatsapp</span>
-                        </i>
-                        واتساپ&nbsp;
-                    </a>
-                </li>
-                {% endif %}
-                {% if link_instagram %}
-                <li>
-                    <a href="{{link_instagram}}">
-                        <i class="icon brands fa-instagram">
-                            <span class="label">Instagram</span>
-                        </i>
-                        اینستاگرام&nbsp;
-                    </a>
-                </li>
-                {% endif %}
-                {% if link_telegram %}
-                <li>
-                    <a href={{link_telegram}}>
-                        <i class="icon brands fa-telegram">
-                            <span class="label">telegram</span>
-                        </i>
-                        تلگرام&nbsp;
-                    </a>
-                </li>
-                {% endif %}
-                {% if link_twitter %}
-                <li>
-                    <a href={{link_twitter}}>
-                        <i class="icon brands fa-twitter">
-                            <span class="label">twitter</span>
-                        </i>
-                        شبکه ایکس&nbsp;
-                    </a>
-                </li>
-                {% endif %}
-            </ul>
-        </div>
-
-        <div class="col-5 col-12-mobile col-12-mobilep">
-            <p><i class="fa fa-check-circle" aria-hidden="true"></i>&nbsp;اعتماد شما سرمایه ماست</p>
-            <a referrerpolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=663640&Code=FmBZJ8LsX7kPwNZW73NiRP4dxWNx4qIG'><img referrerpolicy='origin' src='https://trustseal.enamad.ir/logo.aspx?id=663640&Code=FmBZJ8LsX7kPwNZW73NiRP4dxWNx4qIG' alt='' style='cursor:pointer;width:75px;' code='FmBZJ8LsX7kPwNZW73NiRP4dxWNx4qIG' loading="lazy"></a>
-        </div>
+        
+        <!-- کپی رایت -->
+        <ul class="copyright">
+            <li>طراحی شده توسط: <a href="https://pestiline.ir/resume/Ehsan-Ramezani/" target="_blank">احسان رمضانی</a></li>
+            <li>&copy; حق کپی رایت محفوظ است</li>
+        </ul>
     </div>
-</div>
-<ul class="copyright">
-    <li>طراحی شده توسط: <a href="https://pestiline.ir/resume/Ehsan-Ramezani/" target="_blank">احسان رمضانی</a></li>
-    <li>&copy; حق کپی رایت محفوظ است</li>
-</ul> 
 </footer>

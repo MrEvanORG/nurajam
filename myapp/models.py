@@ -87,6 +87,8 @@ class OtherInfo(models.Model):
     link_whatsapp = models.CharField(max_length=100,verbose_name='لینک واتساپ (فوتر)',null=True,blank=True)
     link_telegram = models.CharField(max_length=100,verbose_name='لینک تلگرام (فوتر)',null=True,blank=True)
     link_twitter = models.CharField(max_length=100,verbose_name='لینک توییتر (فوتر)',null=True,blank=True)
+    link_address = models.CharField(max_length=100,verbose_name='لینک آدرس (فوتر)',null=True,blank=True)
+    address_text = models.CharField(max_length=100,verbose_name='متن آدرس (فوتر)',null=True,blank=True)
 
 
     def save(self,*args,**kwargs):

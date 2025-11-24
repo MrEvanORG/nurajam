@@ -10,6 +10,8 @@ def link_processor(request):
                 "link_whatsapp":config.link_whatsapp,
                 "link_twitter":config.link_twitter,
                 "link_telegram":config.link_telegram,
+                "link_address":config.link_address,
+                "address_text":config.address_text,
             }
     except:
         return {}

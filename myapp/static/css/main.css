@@ -33,7 +33,8 @@
 	--heading-color: #014F86;
 	--table-header-color: #014F86;
 
-	--text-color: #2C7DA0; 
+	--text-color: #2C7DA0;
+	--new-text-color:#2C7DA0;
 	--button-disabled-bg: #2C7DA0;
 
 	--medium-gray: #61A5C2;
@@ -72,29 +73,7 @@
 
 }
 
-footer ul li{
-	margin-bottom: 0.50em;
-}
-footer ul{
-	margin-right: 1.5em;
-}
-footer ul.newalt a{
-	border-bottom: none;
-}
-footer p{
-	margin-bottom: 1em;;
-}
-footer .box{
-	margin: 0;
-	border-radius: 6px;
-}
-footer{
-	padding-bottom:1em !important;
-}
-footer h4{
-	margin-bottom:1.5em;
-	margin-right: -0.75em;
-}
+
 
 .rtl-placeholder {
   direction: ltr !important;         
