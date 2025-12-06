@@ -31,12 +31,12 @@ footer h4{
     font-size: 1.5em;
     color: var(--light-gray);
 	margin-bottom:0.5em;
-	margin-right: -0.45em;
+	margin-right: -0.4em;
 }
 footer h5{
     font-size: 1.25em;
     color:var(--header-text);
 }
 footer .box{
-    background-image: linear-gradient(15deg, var( --secondary-color) 0%, var(--heading-color) 100%);
+    background-image: linear-gradient(9deg, var( --dark-gray) 29%, var(--heading-color) 130%);
 }

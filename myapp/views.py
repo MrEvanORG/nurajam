@@ -7,13 +7,14 @@ from django.contrib import messages
 from .models import User , OtherInfo
 from django.http import HttpResponse
 from django.shortcuts import redirect
+from django.core.mail import send_mail
 from django.http import HttpResponseRedirect 
 from django.shortcuts import render , get_object_or_404
 from django.core.serializers.json import DjangoJSONEncoder
 from myapp.templatetags.custom_filters import to_jalali_persian
 from django.contrib.admin.views.decorators import staff_member_required
 from .models import ActiveModems , ActivePlans, ActiveLocations , OtherInfo , ServiceRequests
-from .forms import SmsForm , RegiterphonePostForm , OtpVerifyForm , PersonalInfoForm , ServiceInfoForm ,TrackingCodeForm , SmsUserForm
+from .forms import SmsForm , RegiterphonePostForm , OtpVerifyForm , PersonalInfoForm , ServiceInfoForm ,TrackingCodeForm , SmsUserForm , ContactForm
 #-------------------------------------------#
 
 def generate_tracking_code():
@@ -24,6 +25,57 @@ def generate_tracking_code():
      
 def index(request):
     return render(request,'index.html')
+
+def about_us(request):
+    if request.method == "POST":
+        form = ContactForm(request.POST, request=request)
+
+        if form.is_valid():
+            data = form.cleaned_data
+            ctg = data['category']
+            if ctg.strip() == "همکاری":
+                subject = f"درخواست همکاری از {data['name']}"
+            elif ctg.strip() == "پشتیبانی":
+                subject = f"درخواست پشتیبانی از {data['name']}"
+            else:
+                subject = f"انتقاد یا پیشنهاد از {data['name']}"
+
+            # from django.utils import timezone
+
+            # body = (
+            #     f"نام: {data['name']}\n"
+            #     f"شرکت: {data['company_name']}\n"
+            #     f"ایمیل: {data['email']}\n"
+            #     f"نوع درخواست: {data['category']}\n\n"
+            #     f"پیام:\n{data['message']}\n\n"
+            #     f"ایپی درخواست دهنده : {get_ip(request)}"
+            #     f"زمان درخواست : { to_jalali_persian(timezone.now()) }"
+            # )
+
+            # send_mail(
+            #     subject,
+            #     body,
+            #     data["email"],
+            #     ["info@nurajam.ir"]
+            # )
+            from .addons import send_contact_email
+            send_contact_email(request,data)
+
+            return render(request, "about_us.html", {
+                "form": ContactForm(),
+                "success": True,
+                "scroll_to_form": True,
+            })
+
+        return render(request, "about_us.html", {
+            "form": form,
+            "error": True,
+            "scroll_to_form": True,
+        })
+
+    # GET
+    form = ContactForm()
+    return render(request, "about_us.html", {"form": form})
 
 def register_index(request):
     request.session['register'] = {

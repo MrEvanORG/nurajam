@@ -9,6 +9,34 @@ def fix_numbers(value):
         value = value.replace(persian[i], str(i)).replace(arabic[i], str(i))
     return value
 
+class ContactForm(forms.Form):
+    name = forms.CharField(required=True,max_length=100,widget=forms.TextInput(attrs={'placeholder':'نام شما'}))
+    company_name = forms.CharField(max_length=150, required=False,widget=forms.TextInput(attrs={'placeholder':'نام شرکت'}))
+    email = forms.EmailField(required=True,widget=forms.EmailInput(attrs={'placeholder':'ایمیل'}))
+    category = forms.ChoiceField(
+        required=True,
+        choices=[
+            ("", "نوع درخواست"),
+            ("همکاری", "همکاری"),
+            ("پشتیبانی", "پشتیبانی"),
+            ("انتقادات و پیشنهادات", "انتقادات و پیشنهادات"),
+        ]
+    )
+    message = forms.CharField(required=True,widget=forms.Textarea(attrs={'placeholder':'پیام / درخواست شما','rows':5}))
+    captcha = forms.CharField(required=True,label="عبارت امنیتی",widget=forms.TextInput(attrs={'placeholder':'کد امنیتی'}))
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+
+    def clean_captcha(self):
+        value = self.cleaned_data["captcha"].upper()
+        real = self.request.session.get("captcha_code", "")
+
+        if value != real:
+            raise forms.ValidationError("کد امنیتی اشتباه است.")
+        return value
+
 class SmsForm(forms.Form):
     message = forms.CharField(
         widget=forms.Textarea(attrs={'rows': 6, 'cols': 80}),
@@ -42,10 +70,6 @@ class SmsUserForm(forms.Form):
                 # self.fields["cost"].widget = 
                 self.fields["card_number"] = forms.IntegerField(label="شماره کارت",required=True)
             
-
-
-
-
 class RegiterphonePostForm(forms.Form):
     mobile = forms.CharField(max_length=11, label='شماره تلفن همراه', required=True)
     post_code = forms.CharField(max_length=10, label='کد پستی', required=True)

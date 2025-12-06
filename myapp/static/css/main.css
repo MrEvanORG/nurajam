@@ -2503,7 +2503,7 @@
 		.box .image.featured {
 			border-radius: 0;
 			display: block;
-			margin: 3em 0 3em -3em;
+			margin: 3em -3em;
 			position: relative;
 			width: calc(100% + 6em);
 		}
@@ -3663,7 +3663,7 @@
 				}
 
 				.box .image.featured {
-					margin-left: -2em;
+					margin-right: -2em;
 					width: calc(100% + 4em);
 				}
 
@@ -4058,7 +4058,7 @@
 
 				.box .image.featured {
 					border-radius: 0;
-					margin-left: -1em;
+					margin-right: -1em;
 					width: calc(100% + 2em);
 				}
 

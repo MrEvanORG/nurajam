@@ -4,6 +4,8 @@ from . import addons
 
 urlpatterns = [
     path('',views.index,name='index'),
+    path('about_us/',views.about_us,name='about-us'),
+    path("captcha/", addons.captcha_image, name="captcha"),
     
     #register 
     path('register/index',views.register_index,name='register-index'),

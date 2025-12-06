@@ -13,8 +13,78 @@ from myapp.templatetags.custom_filters import to_jalali
 from django.shortcuts import get_object_or_404 , redirect , render
 from django.views.decorators.http import require_POST
 from django.contrib.admin.views.decorators import staff_member_required
+import string
+from io import BytesIO
+from PIL import Image, ImageDraw, ImageFont
+
 sms_api = ghasedak_sms.Ghasedak(api_key='e43935da3357ec792ac9bad1226b9ac6ae71ae59dbd6c0f3292dc1ddf909b94ayXcdVcWrLHmZmpfb')
 
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils import timezone
+
+def send_contact_email(request, data):
+    from myapp.templatetags.custom_filters import to_jalali_persian
+    from_email = data['email']
+    ctg = data['category']
+    if ctg.strip() == "همکاری":
+        subject = f"درخواست همکاری از {data['name']}"
+    elif ctg.strip() == "پشتیبانی":
+        subject = f"درخواست پشتیبانی از {data['name']}"
+    else:
+        subject = f"انتقاد یا پیشنهاد از {data['name']}"
+    to = ["info@nurajam.ir"] 
+
+    context = {
+        "subject":subject,
+        "name": data.get("name", "-"),
+        "company_name": data.get("company_name", "-"),
+        "email": data.get("email", "-"),
+        "category": data.get("category", "-"),
+        "message": data.get("message", "-"),
+        "ip": get_ip(request),
+        "created_at": to_jalali_persian(timezone.now()),
+    }
+    html_content = render_to_string("emails/contact_template.html", context)
+    plain_text = (
+        f"نام: {context['name']}\n"
+        f"شرکت: {context['company_name']}\n"
+        f"ایمیل: {context['email']}\n"
+        f"نوع درخواست: {context['category']}\n\n"
+        f"پیام:\n{context['message']}\n\n"
+        f"IP: {context['ip']}\n"
+        f"زمان درخواست: {context['created_at']}\n"
+    )
+
+    msg = EmailMultiAlternatives(subject, plain_text, from_email, to)
+    msg.attach_alternative(html_content, "text/html")
+    msg.send()
+
+def generate_captcha_text(length=5):
+    return ''.join(random.choice(string.digits) for _ in range(length))
+
+def captcha_image(request):
+    captcha_text = generate_captcha_text()
+
+    # ذخیره کپچا در سشن
+    request.session['captcha_code'] = captcha_text
+
+    img = Image.new('RGB', (150, 50), color=(240, 240, 240))
+    draw = ImageDraw.Draw(img)
+
+    # فونت ساده
+    try:
+        font = ImageFont.truetype("arial.ttf", 32)
+    except:
+        font = ImageFont.load_default()
+
+    draw.text((15, 5), captcha_text, font=font, fill=(20, 20, 20))
+
+    buffer = BytesIO()
+    img.save(buffer, format='PNG')
+    img_bytes = buffer.getvalue()
+
+    return HttpResponse(img_bytes, content_type='image/png')
 
 def notif_new_user(text):
     from .models import OtherInfo

@@ -231,3 +231,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+#----------------------------- email --------------------------#
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "mail.nurajam.ir"
+EMAIL_PORT = 587
+EMAIL_HOST_USER = "info@nurajam.ir"
+EMAIL_HOST_PASSWORD = config("EMAIL_PASSWORD")
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+

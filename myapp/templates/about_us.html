@@ -1,0 +1,153 @@
+{% extends 'patterns/base.html' %}
+{% load static %}
+{% block title %}شرکت توسعه زیر ساخت نوراجم | ارائه دهنده راهکارهای زیرساخت و فناوری اطلاعات{% endblock %}
+{% block description%}شرکت توسعه زیر ساخت نوراجم متخصص طراحی و اجرای زیرساخت های IT و راهکارهای فناورانه برای کسب و کارهای کوچک و بزرگ است{% endblock %}
+{% block head %}
+<style>
+    .span-error {
+        color: #dc3545;
+        font-size: 15px;
+        display: block;
+        margin-top: 5px;
+    }
+    .form-error{
+        color: #dc3545;
+        font-size: 1.15em;
+        display: block;
+        margin-top: 1em;
+        margin-bottom:1.25em;       
+    }
+    .form-success{
+        color: #28a745;
+        font-size:1.25em;
+        display: block;
+        margin-top: 1em;
+        margin-bottom:1.25em;        
+    }
+</style>
+{% endblock %}
+{% block header %}<header id="header" class="reveal">{% endblock %}
+
+{% block content %}
+<section id="main" class="container">
+    <header>
+        {% comment %} <h2>Generic</h2> {% endcomment %}
+        {% comment %} <p>A generic page for every non-generic situation.</p> {% endcomment %}
+    </header>
+    <div class="box">
+        <span class="image featured"><img src="{% static 'img/pic01.jpg' %}" alt="شرکت توسعه زیرساخت نوراجم" /></span>
+        <h2>شرکت توسعه زیرساخت نوراجم</h2>
+        <p>ما متعهد به طراحی، تامین و اجرای راهکارهای فیبر نوری و زیرساخت‌های فناوری اطلاعات برای سازمان‌ها و پیمانکاران بزرگ کشور هستیم. از مشاوره مهندسی تا اجرای چاهک تا اتصال نهایی کاربران — هر گام با کیفیت، شفافیت و ایمنی انجام می‌شود.</p>
+        <h3>فیبرنوری ستون ارتباط آینده</h3>
+        {% comment %} <span class="image fit"><img src="{% static 'img/pic04.jpg'%}" alt="" /></span> {% endcomment %}
+        <div class="box alt">
+            <div class="row gtr-50 gtr-uniform">
+                <div class="col-4 col-6-narrower col-12-mobilep"><span class="image fit"><img src="{% static 'img/pic04.jpg' %}" alt="" /></span></div>
+                <div class="col-4 col-6-narrower col-12-mobilep"><span class="image fit"><img src="{% static 'img/pic04.jpg' %}" alt="" /></span></div>
+                <div class="col-4 col-6-narrower col-12-mobilep"><span class="image fit"><img src="{% static 'img/pic04.jpg' %}" alt="" /></span></div>
+                <div class="col-4 col-6-narrower col-12-mobilep"><span class="image fit"><img src="{% static 'img/pic04.jpg' %}" alt="" /></span></div>
+                <div class="col-4 col-6-narrower col-12-mobilep"><span class="image fit"><img src="{% static 'img/pic04.jpg' %}" alt="" /></span></div>
+                <div class="col-4 col-6-narrower col-12-mobilep"><span class="image fit"><img src="{% static 'img/pic04.jpg' %}" alt="" /></span></div>
+                <div class="col-4 col-6-narrower col-12-mobilep"><span class="image fit"><img src="{% static 'img/pic04.jpg' %}" alt="" /></span></div>
+                <div class="col-4 col-6-narrower col-12-mobilep"><span class="image fit"><img src="{% static 'img/pic04.jpg' %}" alt="" /></span></div>
+                <div class="col-4 col-6-narrower col-12-mobilep"><span class="image fit"><img src="{% static 'img/pic04.jpg' %}" alt="" /></span></div>
+            </div>
+        </div>
+        <h3>درباره نوراجم</h3>
+        <p>شرکت توسعه زیرساخت نوراجم با هدف تقویت شبکه ملی ارتباطات و فراهم آوردن زیرساخت‌های امن و پایدار برای صنایع و اپراتورهای حوزه ارتباطات تاسیس شده است. ما ترکیبی از مهندسی ایرانی، استانداردهای بین‌المللی و تجربهٔ عملی پروژه‌ای را در اختیار داریم تا پروژه‌های بزرگ راه‌حل‌محور را به سرانجام برسانیم.</p>
+        <h3>مشتریان و شرکای راهبردی</h3>
+
+        <h4>شرکت مخابرات ایران</h4>
+        <p><span class="image left"><img src="{% static 'img/pic05.jpg' %}" alt="" /></span>
+        شرکت مخابرات ایران یکی از مهم‌ترین شرکای زیرساختی ما در حوزه ارتباطات است. همکاری ما با مخابرات در زمینه توسعه شبکه‌های فیبر نوری، افزایش پوشش دیتا و بهبود پایداری ارتباطات بوده است. این مشارکت، امکان ارائه خدمات سریع‌تر و قابل‌اعتمادتر را برای پروژه‌های سازمانی فراهم کرده است.
+        </p>
+
+        <h4>شرکت پیشگامان</h4>
+        <p><span class="image left"><img src="{% static 'img/pic05.jpg' %}" alt="" /></span>
+        گروه پیشگامان به عنوان یکی از بزرگ‌ترین ارائه‌دهندگان خدمات فناوری و اینترنت کشور، نقش مهمی در پروژه‌های ارتباطی ما داشته است. همکاری ما شامل اجرای طرح‌های فیبر نوری، تقویت شبکه و ارائه راهکارهای نوین ارتباطی برای کسب‌وکارها بوده است. این هم‌افزایی موجب ارتقای کیفیت خدمات و سرعت اجرایی پروژه‌ها شده است.
+        </p>
+
+        <h4>شرکت صنایع مس ایران</h4>
+        <p><span class="image left"><img src="{% static 'img/pic05.jpg' %}" alt="" /></span>
+        شرکت ملی صنایع مس ایران از بزرگ‌ترین مجموعه‌های صنعتی کشور است که در استخراج و تولید مس نقش محوری دارد. همکاری ما با این شرکت شامل اجرای پروژه‌های فیبر نوری، توسعه شبکه‌های داخلی و ایجاد زیرساخت‌های ارتباطی پایدار در مجتمع‌های صنعتی و معدنی است. این مشارکت، ارتقای امنیت، سرعت و پایداری ارتباطات در مجموعه‌های عملیاتی مس را به‌دنبال داشته است.
+        </p>
+    </div>
+    <div class="box">
+        <h3>ارتباط | درخواست همکاری با ما</h3>
+        {% load static %}
+
+        {% if scroll_to_form %}
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                document.getElementById("contact-section").scrollIntoView({ behavior: "smooth" });
+            });
+        </script>
+        {% endif %}
+
+        <section id="contact-section">
+
+        {% if success %}
+            <div class="form-success">پیام شما با موفقیت ارسال شد.</div>
+        {% endif %}
+        {% if error %}
+            <div class="form-error">لطفاً خطاهای فرم را بررسی کنید.</div>
+        {% endif %}
+
+        <form id="contactForm" method="post">
+            {% csrf_token %}
+            <div class="row gtr-uniform gtr-50">
+
+                <div class="col-6 col-12-mobilep">{{ form.name }}</div>
+                {% if form.name.errors %}<span class="js-error span-error">{{ form.name.errors.0 }}</span>{% endif %}
+                <div class="col-6 col-12-mobilep">{{ form.company_name }}</div>
+                {% if form.company_name.errors %}<span class="js-error span-error">{{ form.company_name.errors.0 }}</span>{% endif %}
+                <div class="col-12">{{ form.email }}</div>
+                {% if form.email.errors %}<span class="js-error span-error">{{ form.email.errors.0 }}</span>{% endif %}
+                <div class="col-12">{{ form.category }}</div>
+               {% if form.category.errors %} <span class="js-error span-error">{{ form.category.errors.0 }}</span>{% endif %}
+                <div class="col-12">{{ form.message }}</div>
+                {% if form.message.errors %}<span class="js-error span-error">{{ form.message.errors.0 }}</span>{% endif %}
+
+                <!-- بخش کپچا -->
+                <div class="col-4 col-12-mobilep">
+                    <h5>کد امنیتی</h5>
+                    <span style="margin:0;"> کد امنیتی را در کادر زیر وارد کنید</span>
+                </div>
+
+                <div class="col-3 col-12-mobilep" style="width:auto;">
+                    <img id="captchaImg" src="/captcha/" style="border:1px solid #ccc; border-radius:6px;" />
+                </div>
+
+                <div class="col-5 col-12-mobilep">
+                    <div style="padding-top:10px;"><a href="#" onclick="refreshCaptcha(); return false;">بارگذاری مجدد</a></div>
+                </div>
+
+
+
+                <div class="col-8 col-12-mobilep" style="padding-top:1.5em">{{ form.captcha }}</div>
+                
+                {% if form.captcha.errors %}<div class="col-12"><span class="js-error span-error">{{ form.captcha.errors.0 }}</span></div>{% endif %}
+                </div>
+
+                <div class="col-12" style="margin-top:1em;">
+                    <ul class="actions">
+                        <li style="padding:0;"><input type="submit" value="ارسال درخواست" /></li>
+                        <li><input type="reset" value="ریست" class="alt" /></li>
+                    </ul>
+                </div>
+
+            </div>
+        </form>
+
+        </section>
+
+        <script>
+        function refreshCaptcha() {
+            document.getElementById("captchaImg").src = "/captcha/?r=" + Math.random();
+        }
+        </script>
+
+        <script src="{% static 'js/contact_validation.js' %}"></script>
+    </div>
+</section>
+{% endblock %}

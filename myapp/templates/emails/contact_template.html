@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="fa">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>ارتباط با ما</title>
+  </head>
+  <body style="margin:0;padding:0;background:#f3f5f7;font-family: Tahoma, 'Helvetica Neue', Arial, sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f5f7;padding:20px 0;">
+      <tr>
+        <td align="center">
+          <!-- کانتینر -->
+          <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 6px 18px rgba(20,20,20,0.06);">
+            <tr>
+              <td style="padding:18px 22px;border-bottom:1px solid #e6e9ee;background:linear-gradient(90deg,#ffffff,#fcfdff);">
+                <h2 style="margin:0;font-size:20px;color:#0b3954;text-align:right;direction:rtl;">{{subject}}</h2>
+                <p style="margin:6px 0 0 0;font-size:13px;color:#6b7280;text-align:right;direction:rtl;">
+                  اطلاعات و پیام ارسال‌شده را در ادامه ببینید.
+                </p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:16px 22px;">
+                <!-- کارت اطلاعات -->
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="direction:rtl;text-align:right;">
+                  <tr>
+                    <td style="padding:8px 0;">
+                      <strong style="display:block;font-size:13px;color:#111827;">نام</strong>
+                      <span style="font-size:14px;color:#374151;">{{ name }}</span>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding:8px 0;">
+                      <strong style="display:block;font-size:13px;color:#111827;">شرکت</strong>
+                      <span style="font-size:14px;color:#374151;">{{ company_name }}</span>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding:8px 0;">
+                      <strong style="display:block;font-size:13px;color:#111827;">ایمیل</strong>
+                      <a href="mailto:{{ email }}" style="font-size:14px;color:#0b69ff;text-decoration:none;">{{ email }}</a>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding:8px 0;">
+                      <strong style="display:block;font-size:13px;color:#111827;">نوع درخواست</strong>
+                      <span style="font-size:14px;color:#374151;">{{ category }}</span>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding:12px 0;">
+                      <strong style="display:block;font-size:13px;color:#111827;margin-bottom:6px;">پیام</strong>
+                      <div style="font-size:14px;color:#333333;line-height:1.6;padding:12px;border-radius:8px;background:#fbfdff;border:1px solid #eef2f7;">
+                        {{ message|linebreaksbr }}
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding-top:14px;border-top:1px dashed #e6e9ee;">
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="direction:rtl;">
+                        <tr>
+                          <td style="font-size:13px;color:#6b7280;padding-top:8px;width:50%;">
+                            <div><strong>IP درخواست‌دهنده:</strong></div>
+                            <div style="margin-top:6px;color:#374151;">{{ ip }}</div>
+                          </td>
+                          <td style="font-size:13px;color:#6b7280;padding-top:8px;text-align:left;">
+                            <div><strong>زمان درخواست:</strong></div>
+                            <div style="margin-top:6px;color:#374151;text-align:left;">{{ created_at }}</div>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:16px 22px;background:#fbfdff;text-align:center;direction:rtl;">
+                <p style="margin:0;font-size:12px;color:#8b94a6;">
+                  این ایمیل به‌صورت خودکار تولید شده — لطفاً برای پاسخ مستقیم از ایمیل کاربر استفاده کنید.<br/>تولید شده توسط سیستم هوشمند نوراجم
+                </p>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
