@@ -16,7 +16,7 @@ class StaticViewSitemap(Sitemap):
     changefreq = "weekly"
 
     def items(self):
-        return ['register-index']
+        return ['register-index','about-us']
 
     def location(self, item):
         return reverse(item)

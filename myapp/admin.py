@@ -56,13 +56,20 @@ class NoorajamAdminSite(admin.AdminSite):
 
 super_admin_site = NoorajamAdminSite(name='noorajam_admin')
 
+class StatusIndicatorModelChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        label = super().label_from_instance(obj)
+        if hasattr(obj, 'is_active') and not obj.is_active: # type: ignore
+            return f"❌ {label}"
+        return label
+
 @admin.register(ServiceRequests , site=super_admin_site)
 class ServiceRequestsAdmin(admin.ModelAdmin):
     # list_display = ('first_name','last_name','location','mobile_number')
     list_display_links = ("full_name",)
 
     # list_filter = ("location","finalization_status","marketer_status","drop_status","fusion_status","pay_status","submission_status")
-    search_fields = ("mobile_number","national_code","post_code")
+    search_fields = ("mobile_number","national_code","post_code","first_name","last_name")
     ordering = ("-request_time",)
 
     def get_list_display(self, request,obj=None):
@@ -310,10 +317,24 @@ class ServiceRequestsAdmin(admin.ModelAdmin):
             kwargs['widget'] = AdminJalaliDateWidget
         return super().formfield_for_dbfield(db_field, request, **kwargs)
 
-    def formfield_for_foreignkey(self,db_field,request,**kwargs):
-        if db_field.name == "marketer_name":
-            kwargs["queryset"] = User.objects.filter(role_marketer=True)
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+            if db_field.name == "marketer_name":
+                kwargs["queryset"] = User.objects.filter(role_marketer=True)
+
+            if db_field.name == "modem":
+                kwargs["form_class"] = StatusIndicatorModelChoiceField
+                kwargs["queryset"] = ActiveModems.objects.order_by('-is_active', 'name')
+
+    
+            if db_field.name == "plan":
+                kwargs["form_class"] = StatusIndicatorModelChoiceField
+                kwargs["queryset"] = ActivePlans.objects.order_by('-is_active', 'data')
+
+            if db_field.name == "location":
+                kwargs["form_class"] = StatusIndicatorModelChoiceField
+                kwargs["queryset"] = ActiveLocations.objects.order_by('-is_active', 'name')
+
+            return super().formfield_for_foreignkey(db_field, request, **kwargs)
     
     def save_model(self, request, obj, form, change):
         if not change:

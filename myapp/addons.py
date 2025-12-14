@@ -74,7 +74,9 @@ def captcha_image(request):
 
     # فونت ساده
     try:
-        font = ImageFont.truetype("arial.ttf", 32)
+        from django.conf import settings
+        font_path = os.path.join(settings.BASE_DIR,"static/font/Shabnam.woff")
+        font = ImageFont.truetype(font_path, 32)
     except:
         font = ImageFont.load_default()
 
@@ -137,80 +139,137 @@ otp_timestamps_lock = threading.Lock()
 
 OTP_COOLDOWN_SECONDS = 60
 
-def create_form(request,kind,pk):
+
+
+def create_form(request, kind, pk):
     rq = request.session.get('secure_form_download')
-    if not rq or not rq==pk :
-        return redirect(views.index) 
+    
+    # بررسی امنیتی دانلود
+    if not rq or not str(rq) == str(pk):
+        return redirect('index') # نام ویو index باید صحیح باشد
 
-    obj = get_object_or_404(ServiceRequests,pk=pk)
+    obj = get_object_or_404(ServiceRequests, pk=pk)
     system = platform.system()
-    # '◻' : false
-    # '◼' : true
 
-    # '⬤' : true
-    # '◯' : false
-    supported_data = [20,60,120,220]
-    supported_months = ["mo3","mo6","mo12"]
+    # تعریف سیمبل‌ها برای خوانایی بهتر و مدیریت راحت‌تر
+    S_ON = '◼'  # Square Checked
+    S_OFF = '◻' # Square Unchecked
+    C_ON = '⬤'  # Circle Checked
+    C_OFF = '◯' # Circle Unchecked
+
+    # استخراج آبجکت‌های وابسته برای جلوگیری از کوئری تکراری و ارور NoneType
+    plan = obj.plan
+    modem = obj.modem
+    marketer = obj.marketer_name
+
+    supported_data = [20, 60, 120, 220]
+    supported_months = ["mo3", "mo6", "mo12"]
+
+    # منطق Custom Plan: اگر طرح هست ولی در لیست استاندارد نیست
+    custom_plan_str = ''
+    if plan and (plan.data not in supported_data):
+        custom_plan_str = f'{C_ON} {plan.data}GB'
+    
+    # منطق Custom Time: اگر زمان طرح هست ولی در لیست استاندارد نیست
+    custom_time_str = ''
+    if plan and (plan.plan_time not in supported_months):
+        custom_time_str = f"{C_ON} {obj.get_plan_time_display()}"
+
+
     context = {
-        "name":obj.get_full_name(),
-        "fname":obj.father_name or "",
-        "nc_code":obj.national_code or "",
-        "bc_number":obj.bc_number or "",
-        "birthday":obj.birthday or "",
-        "lnumber":obj.landline_number or "",
-        "mnumber":obj.mobile_number or "",
-        "address":obj.address or "",
-        "cpost":obj.post_code or "",
-        "owner":'⬤'if obj.house_is_owner == 'owner' else '◯',
-        "renter":'⬤'if obj.house_is_owner == 'renter' else  '◯',
-        "mo3":'⬤' if obj.plan.plan_time == "mo3" else '◯',
-        "mo6":'⬤' if obj.plan.plan_time == "mo6" else '◯',
-        "mo12":'⬤' if obj.plan.plan_time == "mo12" else '◯',
-        "mo0":f"⬤ {obj.get_plan_time_display()}" if not obj.plan.plan_time in supported_months else "", #ddd to template after
-        "plan20":'⬤' if obj.plan.data == 20 else '◯',
-        "plan60":'⬤' if obj.plan.data == 60 else '◯',
-        "plan120":'⬤' if obj.plan.data == 120 else '◯',
-        "plan220":'⬤' if obj.plan.data == 220 else '◯',
-        "customp":f'⬤ {obj.plan.data}GB' if not obj.plan.data in supported_data else '',
-        "sip": '◼' if obj.sip_phone else '◻',
-        "reqmodem": '◼' if not obj.modem.price == 0 else '◻',
-        'ability':'◼' if not obj.fusion_status == "rejected" else '◻',
-        'disability':'◼' if obj.fusion_status == "rejected"  else '◻',
-        "fat":obj.fat_index or "",
-        "zone":obj.odc_index or "",
-        "marketer":'' if not obj.marketer_name else obj.marketer_name.get_full_name(),
-        "date":to_jalali(obj.request_time),
-        "prep":'⬤' if obj.plan.plan_type == "prepayment" else '◯',
-        "postp":'⬤' if obj.plan.plan_type == "postpayment" else '◯',
+        # --- اطلاعات شخصی ---
+        "name": obj.get_full_name(),
+        "fname": obj.father_name or "",
+        "nc_code": obj.national_code or "",
+        "bc_number": obj.bc_number or "",
+        "birthday": obj.birthday or "",
+        "lnumber": obj.landline_number or "",
+        "mnumber": obj.mobile_number or "",
+        "address": obj.address or "",
+        "cpost": obj.post_code or "",
+        
+        # --- وضعیت مالکیت ---
+        "owner": C_ON if obj.house_is_owner == 'owner' else C_OFF,
+        "renter": C_ON if obj.house_is_owner == 'renter' else C_OFF,
+
+        # --- مدت زمان طرح (با شرط وجود plan) ---
+        "mo3": C_ON if (plan and plan.plan_time == "mo3") else C_OFF,
+        "mo6": C_ON if (plan and plan.plan_time == "mo6") else C_OFF,
+        "mo12": C_ON if (plan and plan.plan_time == "mo12") else C_OFF,
+        "mo0": custom_time_str,
+
+        # --- حجم طرح (با شرط وجود plan) ---
+        "plan20": C_ON if (plan and plan.data == 20) else C_OFF,
+        "plan60": C_ON if (plan and plan.data == 60) else C_OFF,
+        "plan120": C_ON if (plan and plan.data == 120) else C_OFF,
+        "plan220": C_ON if (plan and plan.data == 220) else C_OFF,
+        "customp": custom_plan_str,
+
+        # --- نوع پرداخت (با شرط وجود plan) ---
+        "prep": C_ON if (plan and plan.plan_type == "prepayment") else C_OFF,
+        "postp": C_ON if (plan and plan.plan_type == "postpayment") else C_OFF,
+
+        # --- سایر سرویس‌ها ---
+        "sip": S_ON if obj.sip_phone else S_OFF,
+        
+        # بررسی مودم: اگر مودم انتخاب نشده باشد (None) یا قیمت 0 باشد، تیک نمی‌خورد
+        "reqmodem": S_ON if (modem and modem.price != 0) else S_OFF,
+
+        # --- وضعیت فیوژن ---
+        "ability": S_ON if (obj.fusion_status != "rejected") else S_OFF,
+        "disability": S_ON if (obj.fusion_status == "rejected") else S_OFF,
+
+        # --- اطلاعات فنی ---
+        "fat": obj.fat_index or "",
+        "zone": obj.odc_index or "",
+
+        # --- بازاریاب ---
+        "marketer": marketer.get_full_name() if marketer else "",
+        
+        # --- تاریخ ---
+        "date": to_jalali(obj.request_time) if obj.request_time else "",
     }
+
+    # مسیردهی فایل‌ها
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    TEMPLATE_PATH = os.path.join(BASE_DIR,"dock-form","template.docx")
-    FTEMPLATE_PATH = os.path.join(BASE_DIR,"dock-form","output.docx")
-    FPDF_PATH = os.path.join(BASE_DIR,"dock-form","output.pdf")
-    FPDF_DIRECTORY = os.path.dirname(FPDF_PATH)
+    # توجه: مسیر dock-form باید در کنار فایل views.py یا در روت پروژه چک شود
+    TEMPLATE_PATH = os.path.join(BASE_DIR, "dock-form", "template.docx")
+    FTEMPLATE_PATH = os.path.join(BASE_DIR, "dock-form", "output.docx")
+    FPDF_PATH = os.path.join(BASE_DIR, "dock-form", "output.pdf")
+
     try:
         doc = DocxTemplate(TEMPLATE_PATH)
+        doc.render(context)
+        doc.save(FTEMPLATE_PATH)
     except Exception as e:
-        return HttpResponse(e)
-    doc.render(context)
-    doc.save(FTEMPLATE_PATH)
+        return HttpResponse(f"Error creating document: {e}")
+
     if kind == 'word':
-        return FileResponse(open(FTEMPLATE_PATH,'rb'),as_attachment=True,filename=f'{obj.get_full_name()}.docx')
-    else:
+        try:
+            return FileResponse(open(FTEMPLATE_PATH, 'rb'), as_attachment=True, filename=f'{obj.get_full_name()}.docx')
+        except FileNotFoundError:
+            return HttpResponse("Error: Generated Word file not found.")
+            
+    else: # PDF Generation
         if system == "Windows":
             import pythoncom
             try:
                 from docx2pdf import convert
                 if os.path.isfile(FPDF_PATH):
                     os.remove(FPDF_PATH)
-                pythoncom.CoInitialize()
-                convert(FTEMPLATE_PATH,FPDF_PATH)
-                return FileResponse(open(FPDF_PATH,'rb'),as_attachment=True,filename=f'{obj.get_full_name()}.pdf')
+                
+                # برای استفاده در محیط‌های Multi-thread مثل جنگو ضروری است
+                pythoncom.CoInitialize() 
+                convert(FTEMPLATE_PATH, FPDF_PATH)
+                
+                return FileResponse(open(FPDF_PATH, 'rb'), as_attachment=True, filename=f'{obj.get_full_name()}.pdf')
 
             except Exception as e:
-                return HttpResponse(e)
+                return HttpResponse(f"PDF Conversion Error: {e}")
         elif system == 'Linux':
-            return HttpResponse("Unsopported in Linux platforms .... ")
+            return HttpResponse("Unsupported in Linux platforms (LibreOffice needed for conversion).")
+        else:
+            return HttpResponse("Unsupported Operating System.")
 
 def otp_generate():
     return str(random.randint(100000, 999999))
